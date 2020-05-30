@@ -22,6 +22,7 @@
 #include "main.h"
 #include "spi.h"
 #include "gpio.h"
+#include "nRF24L02.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
