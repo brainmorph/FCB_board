@@ -96,12 +96,34 @@ int main(void)
   NRF24_begin(GPIOB, SPI1_CS_Pin, SPI1_CE_Pin, hspi1);
   nrf24_DebugUART_Init(huart6);
   printRadioSettings();
+
+  //most basic NRF transmit mode (NO ACK, just transmit)
+  uint64_t TxpipeAddrs = 0x11223344AA;
+  char myTxData[32] = "Hello goobers";
+
+  NRF24_stopListening();   // just in case
+  NRF24_openWritingPipe(TxpipeAddrs);
+  NRF24_setAutoAck(false); // disable ack
+  NRF24_setChannel(52);    // choose a channel (why 52?)
+  NRF24_setPayloadSize(32);// 32 bytes is maximum for NRF... just use it
+  //config for TX mode and transmit data
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  /* Transmit data without waiting for ACK */
+	  if(NRF24_write(myTxData, 32) != 0) // NRF maximum payload length is 32 bytes
+	  {
+		  HAL_UART_Transmit(&huart6, (uint8_t *)"Tx success\r\n", strlen("Tx success\r\n"), 10); // print success with 10 ms timeout
+	  }
+
+	  HAL_Delay(1000); // delay a second
+
+	  HAL_UART_Transmit(&huart6, (uint8_t *)"Retrying...\r\n", strlen("Retrying...\r\n"), 10); // print success with 10 ms timeout
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
