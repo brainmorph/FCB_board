@@ -91,10 +91,10 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI1_Init();
-  MX_USART2_UART_Init();
+  MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
   NRF24_begin(GPIOB, SPI1_CS_Pin, SPI1_CE_Pin, hspi1);
-  nrf24_DebugUART_Init(huart2);
+  nrf24_DebugUART_Init(huart6);
   printRadioSettings();
   /* USER CODE END 2 */
 
