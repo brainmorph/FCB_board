@@ -94,6 +94,8 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   NRF24_begin(GPIOB, SPI1_CS_Pin, SPI1_CE_Pin, hspi1);
+  nrf24_DebugUART_Init(huart2);
+  printRadioSettings();
   /* USER CODE END 2 */
 
   /* Infinite loop */
