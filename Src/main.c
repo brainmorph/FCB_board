@@ -99,15 +99,27 @@ int main(void)
   printConfigReg();
 
   //most basic NRF transmit mode (NO ACK, just transmit)
-  uint64_t TxpipeAddrs = 0x11223344AA;
+  uint64_t TxRxpipeAddrs = 0x11223344AA;
   char myTxData[32] = "Hello goobers";
+  char myRxData[50];
+
+//#define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
+#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
 
   NRF24_stopListening();   // just in case
-  NRF24_openWritingPipe(TxpipeAddrs);
+#ifdef TX_SETTINGS
+  NRF24_openWritingPipe(TxRxpipeAddrs);
+#endif
+#ifdef RX_SETTINGS
+  NRF24_openReadingPipe(1, TxRxpipeAddrs);
+#endif
   NRF24_setAutoAck(false); // disable ack
   NRF24_setChannel(52);    // choose a channel (why 52?)
   NRF24_setPayloadSize(32);// 32 bytes is maximum for NRF... just use it
-  //config for TX mode and transmit data
+
+#ifdef RX_SETTINGS
+  NRF24_startListening();
+#endif
 
   /* USER CODE END 2 */
 
@@ -115,6 +127,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+#ifdef TX_SETTINGS
 	  /* Transmit data without waiting for ACK */
 	  if(NRF24_write(myTxData, 32) != 0) // NRF maximum payload length is 32 bytes
 	  {
@@ -124,7 +137,19 @@ int main(void)
 	  HAL_Delay(1000); // delay a second
 
 	  HAL_UART_Transmit(&huart6, (uint8_t *)"Retrying...\r\n", strlen("Retrying...\r\n"), 10); // print success with 10 ms timeout
+#endif
 
+#ifdef RX_SETTINGS
+	  if(NRF24_available())
+	  {
+		  HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n", strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
+		  NRF24_read(myRxData, 32); // remember that NRF radio can at most transmit 32 bytes
+		  myRxData[32] = '\r';
+		  myRxData[32 + 1] = '\n';
+
+		  HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, 32+2, 10); // print success with 10 ms timeout
+	  }
+#endif
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
