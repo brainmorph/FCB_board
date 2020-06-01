@@ -96,6 +96,7 @@ int main(void)
   NRF24_begin(GPIOB, SPI1_CS_Pin, SPI1_CE_Pin, hspi1);
   nrf24_DebugUART_Init(huart6);
   printRadioSettings();
+  printConfigReg();
 
   //most basic NRF transmit mode (NO ACK, just transmit)
   uint64_t TxpipeAddrs = 0x11223344AA;

@@ -72,7 +72,7 @@ static const uint8_t RF24_RX_PW_PIPE[6] = {
 };
 //**** Functions prototypes ****//
 //Microsecond delay function
-void NRF24_DelayMicroSeconds(uint32_t uSec);
+void NRF24_DelayMicroSeconds(volatile uint32_t uSec);
 
 //1. Chip Select function
 void NRF24_csn(int mode);
