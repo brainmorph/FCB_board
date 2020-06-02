@@ -78,6 +78,7 @@ void testReadBME280(void)
 	  volatile uint32_t temperature = BME280_CalcT(tRaw);
 	  volatile uint32_t paPressure = BME280_CalcP(pRaw);
 	  volatile float pascalFloat = ((float)paPressure)/256.0;
+	  volatile float hpaPressure = pascalFloat / 100.0;
 	  uint32_t dummy = pRaw;
 	  float dummy2 = pascalFloat;
 
@@ -87,18 +88,7 @@ void testReadBME280(void)
 	  volatile uint32_t humidity;
 
 	  // Human-readable altitude value
-	  volatile int32_t altitude;
-
-	  // Pressure in Q24.8 format
-	  uint32_t press_q24_8;
-	  press_q24_8 = BME280_CalcP(pRaw);
-	  //			press_q24_8 = 24674867; // test Q24.8 value, output must be 96386.199
-	  // Convert Q24.8 value to integer
-	  // e.g. Q24.8 value '24674867' will be converted to '96386199' what represents 96386.199
-	  // Fractional part computed as (frac / 2^8)
-	  pressure = ((press_q24_8 >> 8) * 1000) + (((press_q24_8 & 0xff) * 390625) / 100000);
-
-	  altitude = BME280_Pa_to_Alt(pressure / 1000);
+	  volatile float altitude = BME280_Altitude_Meters(hpaPressure);
 	  volatile int32_t dummy99 = altitude;
   }
   //---------------------------------

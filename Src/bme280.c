@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include "bme280.h"
 #include "i2c.h"
+#include "math.h"
 
 #define DEVICE_ADDRESS 0x76; // use 0x76 even though data-sheet says 0x77
 
@@ -180,6 +181,15 @@ int32_t BME280_CalcT(int32_t UT) {
 }
 
 
+float BME280_Altitude_Meters(float localhPa)
+{
+	volatile float P = localhPa / 1013.25;	// 1013.25 is sea level pressure in hPa
+	volatile float subtract = pow(P, (1/5.255));
+	volatile float multiply = 1 - subtract;
+	volatile float altitude = multiply * 44330;
+
+	return altitude;
+}
 
 // Convert pressure in Pascals to altitude in millimeters via barometric formula
 // input:
