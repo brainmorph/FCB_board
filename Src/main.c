@@ -71,6 +71,9 @@ void testReadBME280(void)
   int32_t hRaw = 0;
 
   BME280_Read_Calibration();
+
+  HAL_Delay(100);
+
   //while(1)
   {
 	  bme280ReadAllRaw(&tRaw, &pRaw, &hRaw);
@@ -92,6 +95,31 @@ void testReadBME280(void)
 	  volatile int32_t dummy99 = altitude;
   }
   //---------------------------------
+}
+
+void re_readBME280()
+{
+	int32_t tRaw = 0;
+	int32_t pRaw = 0;
+	int32_t hRaw = 0;
+
+	bme280ReadAllRaw(&tRaw, &pRaw, &hRaw);
+
+	volatile uint32_t temperature = BME280_CalcT(tRaw);
+	volatile uint32_t paPressure = BME280_CalcP(pRaw);
+	volatile float pascalFloat = ((float)paPressure)/256.0;
+	volatile float hpaPressure = pascalFloat / 100.0;
+	uint32_t dummy = pRaw;
+	float dummy2 = pascalFloat;
+
+
+	// Human-readable temperature, pressure and humidity value
+	volatile uint32_t pressure;
+	volatile uint32_t humidity;
+
+	// Human-readable altitude value
+	volatile float altitude = BME280_Altitude_Meters(hpaPressure);
+	volatile int32_t dummy99 = altitude;
 }
 /* USER CODE END 0 */
 
@@ -160,11 +188,13 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  testReadBME280();
   while (1)
   {
 #ifdef TX_SETTINGS
 	  /* Transmit data without waiting for ACK */
-	  testReadBME280();
+	  while(1)
+		  re_readBME280();
 	  volatile float altitude = getCurrentAltitude();
 
 	  /* convert float to string.  STAY BACK */
