@@ -19,6 +19,8 @@ void BME280_Read_Calibration(void);
 int32_t BME280_Pa_to_Alt(uint32_t P);
 float BME280_Altitude_Meters(float localhPa);
 
+float getCurrentAltitude(void);
+
 int32_t BME280_CalcT(int32_t UT);
 uint32_t BME280_CalcP(int32_t UP);
 

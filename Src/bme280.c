@@ -180,7 +180,7 @@ int32_t BME280_CalcT(int32_t UT) {
 	return ((t_fine * 5) + 128) >> 8;
 }
 
-
+float lastAltitude = 0.0f;
 float BME280_Altitude_Meters(float localhPa)
 {
 	volatile float P = localhPa / 1013.25;	// 1013.25 is sea level pressure in hPa
@@ -188,7 +188,13 @@ float BME280_Altitude_Meters(float localhPa)
 	volatile float multiply = 1 - subtract;
 	volatile float altitude = multiply * 44330;
 
+	lastAltitude = altitude;
 	return altitude;
+}
+
+float getCurrentAltitude(void)
+{
+	return lastAltitude;
 }
 
 // Convert pressure in Pascals to altitude in millimeters via barometric formula

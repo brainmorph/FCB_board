@@ -71,7 +71,7 @@ void testReadBME280(void)
   int32_t hRaw = 0;
 
   BME280_Read_Calibration();
-  while(1)
+  //while(1)
   {
 	  bme280ReadAllRaw(&tRaw, &pRaw, &hRaw);
 
@@ -164,12 +164,21 @@ int main(void)
   {
 #ifdef TX_SETTINGS
 	  /* Transmit data without waiting for ACK */
+	  testReadBME280();
+	  volatile float altitude = getCurrentAltitude();
+
+	  /* convert float to string.  STAY BACK */
+	  volatile int preDecimal = (int) altitude;
+	  volatile int postDecimal = (int)((altitude - preDecimal) * 100 );
+
+
+
+	  snprintf(myTxData, 32, "Altitude in meters: %d.%d", preDecimal, postDecimal);
 	  if(NRF24_write(myTxData, 32) != 0) // NRF maximum payload length is 32 bytes
 	  {
 		  HAL_UART_Transmit(&huart6, (uint8_t *)"Tx success\r\n", strlen("Tx success\r\n"), 10); // print success with 10 ms timeout
 	  }
 
-	  testReadBME280();
 
 	  HAL_Delay(1000); // delay a second
 
