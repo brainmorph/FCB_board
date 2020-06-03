@@ -64,10 +64,10 @@ void testReadBME280(void)
 {
   //----TEST I2C----- // TODO: remove
   volatile uint8_t registerVal = bme280ReadReg(0xD0);
-  bme280WriteReg(0xF4, 0x07); // wake the BME280 sensor
+  bme280WriteReg(0xF4, 0x27); // wake the BME280 sensor and enable temperature and pressure
 
   //enable temperature reading
-  bme280WriteReg(0xF4, 0x27);
+//  bme280WriteReg(0xF4, 0x27);
 
   //Read chip ID register just to make sure BM280 is ok
 //  volatile uint8_t chipID = bme280ReadReg(BME280_CHIP_ID_REG);
@@ -174,7 +174,7 @@ int main(void)
   char myTxData[32] = "Hello goobers";
   char myRxData[50];
   volatile float filteredAltitude = 0;
-  volatile float alpha = 0.5;
+  volatile float alpha = 0.1;
 
 #define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
 //#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode

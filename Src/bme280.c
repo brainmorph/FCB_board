@@ -100,9 +100,12 @@ void bme280ReadAllRaw(int32_t *UT, int32_t *UP, int32_t *UH)
 	if(status != HAL_OK)
 	{
 		// TODO: log error
+		while(1)
+			;
 	}
 
-	status = HAL_I2C_Master_Receive(&hi2c1, shiftedAddress, pData, 6, 1000); //read 6 bytes since only Temp and Pressure are enabled and they each need 3 bytes
+	Size = 6; // Since temperature and pressure are enabled only, and since they each need 3 bytes, we need to read a total of 6 bytes
+	status = HAL_I2C_Master_Receive(&hi2c1, shiftedAddress, pData, Size, 1000);
 
 	*UP = (int32_t)((pData[0] << 12) | (pData[1] << 4) | (pData[2] >> 4));
 	*UT = (int32_t)((pData[3] << 12) | (pData[4] << 4) | (pData[5] >> 4));
