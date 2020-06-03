@@ -55,78 +55,12 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void testReadBME280(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void testReadBME280(void)
-{
-  //----TEST I2C----- // TODO: remove
-  volatile uint8_t registerVal = bme280ReadReg(0xD0);
-  bme280WriteReg(0xF4, 0x27); // wake the BME280 sensor and enable temperature and pressure
 
-  //enable temperature reading
-//  bme280WriteReg(0xF4, 0x27);
-
-  //Read chip ID register just to make sure BM280 is ok
-//  volatile uint8_t chipID = bme280ReadReg(BME280_CHIP_ID_REG);
-
-  int32_t tRaw = 0;
-  int32_t pRaw = 0;
-  int32_t hRaw = 0;
-
-  BME280_Read_Calibration();
-
-  HAL_Delay(100);
-
-  //while(1)
-  {
-	  bme280ReadAllRaw(&tRaw, &pRaw, &hRaw);
-
-	  volatile uint32_t temperature = BME280_CalcT(tRaw);
-	  volatile uint32_t paPressure = BME280_CalcP(pRaw);
-	  volatile float pascalFloat = ((float)paPressure)/256.0;
-	  volatile float hpaPressure = pascalFloat / 100.0;
-	  uint32_t dummy = pRaw;
-	  float dummy2 = pascalFloat;
-
-
-	  // Human-readable temperature, pressure and humidity value
-	  volatile uint32_t pressure;
-	  volatile uint32_t humidity;
-
-	  // Human-readable altitude value
-	  volatile float altitude = BME280_Altitude_Meters(hpaPressure);
-	  volatile int32_t dummy99 = altitude;
-  }
-  //---------------------------------
-}
-
-void re_readBME280()
-{
-	int32_t tRaw = 0;
-	int32_t pRaw = 0;
-	int32_t hRaw = 0;
-
-	bme280ReadAllRaw(&tRaw, &pRaw, &hRaw);
-
-	volatile uint32_t temperature = BME280_CalcT(tRaw);
-	volatile uint32_t paPressure = BME280_CalcP(pRaw);
-	volatile float pascalFloat = ((float)paPressure)/256.0;
-	volatile float hpaPressure = pascalFloat / 100.0;
-	uint32_t dummy = pRaw;
-	float dummy2 = pascalFloat;
-
-
-	// Human-readable temperature, pressure and humidity value
-	volatile uint32_t pressure;
-	volatile uint32_t humidity;
-
-	// Human-readable altitude value
-	volatile float altitude = BME280_Altitude_Meters(hpaPressure);
-	volatile int32_t dummy99 = altitude;
-}
 /* USER CODE END 0 */
 
 /**
@@ -162,6 +96,8 @@ int main(void)
   MX_I2C1_Init();
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
+  BMFC_BME280_Init(); // Initialize the BME280 sensor
+
   NRF24_begin(GPIOB, SPI1_CS_Pin, SPI1_CE_Pin, hspi1);
   nrf24_DebugUART_Init(huart6);
   printRadioSettings();
@@ -196,7 +132,6 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  testReadBME280();
   while (1)
   {
 #ifdef TX_SETTINGS
@@ -207,7 +142,8 @@ int main(void)
 		  //volatile uint8_t configReg = bme280ReadReg(BME280_CONFIG_REG);
 
 		  HAL_Delay(10);
-		  re_readBME280();
+
+		  BMFC_BME280_TriggerAltitudeCalculation(); // trigger altitude calculation
 
 		  volatile float altitude = getCurrentAltitude();
 

@@ -12,16 +12,18 @@
 #define BME280_CONFIG_REG 0xF5
 #define BME280_CHIP_ID_REG	0xD0
 
+void BMFC_BME280_Init(void); // wakes the BME280 sensor and enables Temperature and Pressure readings
+void BMFC_BME280_TriggerAltitudeCalculation(void); // calculates filtered altitude value in meters
+float BME280_Altitude_Meters(float localhPa); // returns last calculated altitude in meters
+
 uint8_t bme280ReadReg(uint8_t reg);
 void bme280ReadRegs(uint8_t reg, uint16_t size, uint8_t* data);
-
 void bme280WriteReg(uint8_t reg, uint8_t value);
 
 uint32_t bme280ReadPressure();
 void bme280ReadAllRaw(int32_t *UT, int32_t *UP, int32_t *UH);
 void BME280_Read_Calibration(void);
 int32_t BME280_Pa_to_Alt(uint32_t P);
-float BME280_Altitude_Meters(float localhPa);
 
 float getCurrentAltitude(void);
 

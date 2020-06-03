@@ -14,6 +14,69 @@
 
 static int32_t t_fine;
 
+void BMFC_BME280_Init(void)
+{
+  volatile uint8_t registerVal = bme280ReadReg(0xD0);
+  // TODO: does a delay ever need to happen between successive I2C comms?
+  bme280WriteReg(0xF4, 0x27); // wake the BME280 sensor and enable temperature and pressure
+
+  int32_t tRaw = 0;
+  int32_t pRaw = 0;
+  int32_t hRaw = 0;
+
+  BME280_Read_Calibration();
+
+  HAL_Delay(100);
+
+  //Do 1 altitude calculation as a check
+  {
+	  bme280ReadAllRaw(&tRaw, &pRaw, &hRaw);
+
+	  volatile uint32_t temperature = BME280_CalcT(tRaw);
+	  volatile uint32_t paPressure = BME280_CalcP(pRaw);
+	  volatile float pascalFloat = ((float)paPressure)/256.0;
+	  volatile float hpaPressure = pascalFloat / 100.0;
+	  uint32_t dummy = pRaw;
+	  float dummy2 = pascalFloat;
+
+
+	  // Human-readable temperature, pressure and humidity value
+	  volatile uint32_t pressure;
+	  volatile uint32_t humidity;
+
+	  // Human-readable altitude value
+	  volatile float altitude = BME280_Altitude_Meters(hpaPressure);
+	  volatile int32_t dummy99 = altitude;
+  }
+  //---------------------------------
+}
+
+void BMFC_BME280_TriggerAltitudeCalculation(void)
+{
+	int32_t tRaw = 0;
+	int32_t pRaw = 0;
+	int32_t hRaw = 0;
+
+	bme280ReadAllRaw(&tRaw, &pRaw, &hRaw);
+
+	volatile uint32_t temperature = BME280_CalcT(tRaw);
+	volatile uint32_t paPressure = BME280_CalcP(pRaw);
+	volatile float pascalFloat = ((float)paPressure)/256.0;
+	volatile float hpaPressure = pascalFloat / 100.0;
+	uint32_t dummy = pRaw;
+	float dummy2 = pascalFloat;
+
+
+	// Human-readable temperature, pressure and humidity value
+	volatile uint32_t pressure;
+	volatile uint32_t humidity;
+
+	// Human-readable altitude value
+	volatile float altitude = BME280_Altitude_Meters(hpaPressure);
+	volatile int32_t dummy99 = altitude;
+}
+
+
 uint8_t bme280ReadReg(uint8_t reg)
 {
 	uint16_t deviceAddress = DEVICE_ADDRESS;
