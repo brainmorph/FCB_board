@@ -66,6 +66,9 @@ void testReadBME280(void)
   volatile uint8_t registerVal = bme280ReadReg(0xD0);
   bme280WriteReg(0xF4, 0x07); // wake the BME280 sensor
 
+  //Read chip ID register just to make sure BM280 is ok
+//  volatile uint8_t chipID = bme280ReadReg(BME280_CHIP_ID_REG);
+
   int32_t tRaw = 0;
   int32_t pRaw = 0;
   int32_t hRaw = 0;
@@ -194,7 +197,25 @@ int main(void)
 #ifdef TX_SETTINGS
 	  /* Transmit data without waiting for ACK */
 	  while(1)
+	  {
+		  volatile uint8_t ctrlReg = bme280ReadReg(BME280_CTRL_MEAS_REG);
+		  volatile uint8_t configReg = bme280ReadReg(BME280_CONFIG_REG);
+
+		  HAL_Delay(100);
 		  re_readBME280();
+
+		  volatile float altitude = getCurrentAltitude();
+
+		  /* convert float to string.  STAY BACK */
+		  volatile int preDecimal = (int) altitude;
+		  volatile int postDecimal = (int)((altitude - preDecimal) * 100);
+
+
+
+		  snprintf(myTxData, 32, "Altitude in meters: %d.%d\r\n", preDecimal, postDecimal);
+		  HAL_UART_Transmit(&huart6, (uint8_t *)myTxData, strlen(myTxData), 10); // print success with 10 ms timeout
+
+	  }
 	  volatile float altitude = getCurrentAltitude();
 
 	  /* convert float to string.  STAY BACK */
@@ -204,6 +225,7 @@ int main(void)
 
 
 	  snprintf(myTxData, 32, "Altitude in meters: %d.%d", preDecimal, postDecimal);
+	  HAL_UART_Transmit(&huart6, (uint8_t *)myTxData, strlen(myTxData), 10); // print success with 10 ms timeout
 	  if(NRF24_write(myTxData, 32) != 0) // NRF maximum payload length is 32 bytes
 	  {
 		  HAL_UART_Transmit(&huart6, (uint8_t *)"Tx success\r\n", strlen("Tx success\r\n"), 10); // print success with 10 ms timeout

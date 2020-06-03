@@ -8,6 +8,10 @@
 #ifndef BME280_H_
 #define BME280_H_
 
+#define BME280_CTRL_MEAS_REG 0xF4
+#define BME280_CONFIG_REG 0xF5
+#define BME280_CHIP_ID_REG	0xD0
+
 uint8_t bme280ReadReg(uint8_t reg);
 void bme280ReadRegs(uint8_t reg, uint16_t size, uint8_t* data);
 
