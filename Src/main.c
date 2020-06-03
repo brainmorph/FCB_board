@@ -105,8 +105,6 @@ void testReadBME280(void)
 
 void re_readBME280()
 {
-	volatile uint8_t registerVal = bme280ReadReg(0xF4);
-
 	int32_t tRaw = 0;
 	int32_t pRaw = 0;
 	int32_t hRaw = 0;
@@ -205,8 +203,8 @@ int main(void)
 	  /* Transmit data without waiting for ACK */
 	  while(1)
 	  {
-		  volatile uint8_t ctrlReg = bme280ReadReg(BME280_CTRL_MEAS_REG);
-		  volatile uint8_t configReg = bme280ReadReg(BME280_CONFIG_REG);
+		  //volatile uint8_t ctrlReg = bme280ReadReg(BME280_CTRL_MEAS_REG);
+		  //volatile uint8_t configReg = bme280ReadReg(BME280_CONFIG_REG);
 
 		  HAL_Delay(10);
 		  re_readBME280();
