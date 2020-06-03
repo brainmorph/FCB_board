@@ -66,6 +66,9 @@ void testReadBME280(void)
   volatile uint8_t registerVal = bme280ReadReg(0xD0);
   bme280WriteReg(0xF4, 0x07); // wake the BME280 sensor
 
+  //enable temperature reading
+  bme280WriteReg(0xF4, 0x27);
+
   //Read chip ID register just to make sure BM280 is ok
 //  volatile uint8_t chipID = bme280ReadReg(BME280_CHIP_ID_REG);
 
@@ -102,6 +105,8 @@ void testReadBME280(void)
 
 void re_readBME280()
 {
+	volatile uint8_t registerVal = bme280ReadReg(0xF4);
+
 	int32_t tRaw = 0;
 	int32_t pRaw = 0;
 	int32_t hRaw = 0;
@@ -168,6 +173,8 @@ int main(void)
   uint64_t TxRxpipeAddrs = 0x11223344AA;
   char myTxData[32] = "Hello goobers";
   char myRxData[50];
+  volatile float filteredAltitude = 0;
+  volatile float alpha = 0.5;
 
 #define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
 //#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
@@ -201,7 +208,7 @@ int main(void)
 		  volatile uint8_t ctrlReg = bme280ReadReg(BME280_CTRL_MEAS_REG);
 		  volatile uint8_t configReg = bme280ReadReg(BME280_CONFIG_REG);
 
-		  HAL_Delay(100);
+		  HAL_Delay(10);
 		  re_readBME280();
 
 		  volatile float altitude = getCurrentAltitude();
@@ -211,9 +218,16 @@ int main(void)
 		  volatile int postDecimal = (int)((altitude - preDecimal) * 100);
 
 
-
 		  snprintf(myTxData, 32, "Altitude in meters: %d.%d\r\n", preDecimal, postDecimal);
+		  //HAL_UART_Transmit(&huart6, (uint8_t *)myTxData, strlen(myTxData), 10); // print success with 10 ms timeout
+
+		  // do the calculation again but for filtered altitude values
+		  filteredAltitude = (alpha * altitude) + ((1-alpha) * filteredAltitude);
+		  preDecimal = (int) filteredAltitude;
+		  postDecimal = (int)((filteredAltitude - preDecimal) * 100);
+		  snprintf(myTxData, 32, "Filtered altitude: %d.%d\r\n", preDecimal, postDecimal);
 		  HAL_UART_Transmit(&huart6, (uint8_t *)myTxData, strlen(myTxData), 10); // print success with 10 ms timeout
+
 
 	  }
 	  volatile float altitude = getCurrentAltitude();
