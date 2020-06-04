@@ -162,9 +162,8 @@ void bme280ReadAllRaw(int32_t *UT, int32_t *UP, int32_t *UH)
 	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c1, shiftedAddress, pData, Size, 1000); //select register
 	if(status != HAL_OK)
 	{
-		// TODO: log error
-		while(1)
-			;
+		// TODO: log error.  Generate a non-blocking error flag that starts to get printed out
+		return; // try again next time
 	}
 
 	Size = 6; // Since temperature and pressure are enabled only, and since they each need 3 bytes, we need to read a total of 6 bytes

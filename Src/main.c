@@ -132,48 +132,44 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  typedef struct
+  {
+	  volatile int preDecimal;	// signed 32 bit int
+	  volatile int postDecimal; 	// signed 32 bit int
+  }AltimeterData_t;
+
+  AltimeterData_t altimeter = {0, 0};
+
   while (1)
   {
 #ifdef TX_SETTINGS
 	  /* Transmit data without waiting for ACK */
-	  while(1)
-	  {
-		  //volatile uint8_t ctrlReg = bme280ReadReg(BME280_CTRL_MEAS_REG);
-		  //volatile uint8_t configReg = bme280ReadReg(BME280_CONFIG_REG);
 
-		  HAL_Delay(10);
+	  //volatile uint8_t ctrlReg = bme280ReadReg(BME280_CTRL_MEAS_REG);
+	  //volatile uint8_t configReg = bme280ReadReg(BME280_CONFIG_REG);
 
-		  BMFC_BME280_TriggerAltitudeCalculation(); // trigger altitude calculation
+	  HAL_Delay(10);
 
-		  volatile float altitude = getCurrentAltitude();
+	  BMFC_BME280_TriggerAltitudeCalculation(); // trigger altitude calculation
 
-		  /* convert float to string.  STAY BACK */
-		  volatile int preDecimal = (int) altitude;
-		  volatile int postDecimal = (int)((altitude - preDecimal) * 100);
-
-
-		  snprintf(myTxData, 32, "Altitude in meters: %d.%d\r\n", preDecimal, postDecimal);
-		  //HAL_UART_Transmit(&huart6, (uint8_t *)myTxData, strlen(myTxData), 10); // print success with 10 ms timeout
-
-		  // do the calculation again but for filtered altitude values
-		  filteredAltitude = (alpha * altitude) + ((1-alpha) * filteredAltitude);
-		  preDecimal = (int) filteredAltitude;
-		  postDecimal = (int)((filteredAltitude - preDecimal) * 100);
-		  snprintf(myTxData, 32, "Filtered altitude: %d.%d\r\n", preDecimal, postDecimal);
-		  HAL_UART_Transmit(&huart6, (uint8_t *)myTxData, strlen(myTxData), 10); // print success with 10 ms timeout
-
-
-	  }
 	  volatile float altitude = getCurrentAltitude();
 
 	  /* convert float to string.  STAY BACK */
-	  volatile int preDecimal = (int) altitude;
-	  volatile int postDecimal = (int)((altitude - preDecimal) * 100 );
+	  altimeter.preDecimal = (int) altitude;
+	  altimeter.postDecimal = (int)((altitude - altimeter.preDecimal) * 100);
 
 
+	  //snprintf(myTxData, 32, "Altitude in meters: %d.%d\r\n", altimeter.preDecimal, altimeter.postDecimal);
+	  //HAL_UART_Transmit(&huart6, (uint8_t *)myTxData, strlen(myTxData), 10); // print success with 10 ms timeout
 
-	  snprintf(myTxData, 32, "Altitude in meters: %d.%d", preDecimal, postDecimal);
+	  // do the calculation again but for filtered altitude values
+	  filteredAltitude = (alpha * altitude) + ((1-alpha) * filteredAltitude);
+	  altimeter.preDecimal = (int) filteredAltitude;
+	  altimeter.postDecimal = (int)((filteredAltitude - altimeter.preDecimal) * 100);
+	  snprintf(myTxData, 32, "Filtered altitude: %d.%d\r\n", altimeter.preDecimal, altimeter.postDecimal);
 	  HAL_UART_Transmit(&huart6, (uint8_t *)myTxData, strlen(myTxData), 10); // print success with 10 ms timeout
+
+	  // Transmit over RF
 	  if(NRF24_write(myTxData, 32) != 0) // NRF maximum payload length is 32 bytes
 	  {
 		  HAL_UART_Transmit(&huart6, (uint8_t *)"Tx success\r\n", strlen("Tx success\r\n"), 10); // print success with 10 ms timeout
