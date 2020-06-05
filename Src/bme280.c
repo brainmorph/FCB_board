@@ -84,14 +84,14 @@ uint8_t bme280ReadReg(uint8_t reg)
 	uint8_t pData[3] = {0};
 	pData[0] = reg; //register in question
 	uint16_t Size = 1;
-	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c1, shiftedAddress, pData, Size, 1000); //select register
+	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c3, shiftedAddress, pData, Size, 1000); //select register
 	if(status != HAL_OK)
 	{
 		// TODO: log error
 	}
 
 	uint8_t value = 0;
-	status = HAL_I2C_Master_Receive(&hi2c1, shiftedAddress, &value, 1, 1000); //read from register
+	status = HAL_I2C_Master_Receive(&hi2c3, shiftedAddress, &value, 1, 1000); //read from register
 	return value;
 }
 
@@ -102,13 +102,13 @@ void bme280ReadRegs(uint8_t reg, uint16_t size, uint8_t* data)
 	uint8_t pData[3] = {0};
 	pData[0] = reg; //register in question
 	uint16_t Size = 1;
-	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c1, shiftedAddress, pData, Size, 1000); //select register
+	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c3, shiftedAddress, pData, Size, 1000); //select register
 	if(status != HAL_OK)
 	{
 		// TODO: log error
 	}
 
-	status = HAL_I2C_Master_Receive(&hi2c1, shiftedAddress, data, size, 1000); //read from register
+	status = HAL_I2C_Master_Receive(&hi2c3, shiftedAddress, data, size, 1000); //read from register
 
 
 }
@@ -121,7 +121,7 @@ void bme280WriteReg(uint8_t reg, uint8_t value)
 	pData[0] = reg; //register in question
 	pData[1] = value; //value to write
 	uint16_t Size = 2; //we need to send 2 bytes of data (check out mpu datasheet... write register operation is defined this way)
-	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c1, shiftedAddress, pData, Size, 1000); //select register and write to it all in one
+	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c3, shiftedAddress, pData, Size, 1000); //select register and write to it all in one
 	if(status != HAL_OK)
 	{
 		// TODO: log error
@@ -135,13 +135,13 @@ uint32_t bme280ReadPressure()
 	uint8_t pData[3] = {0};
 	pData[0] = 0xF7; // Register of MSB pressure value.  Plan is to read 2 more registers after this one for LSB and XSB
 	uint16_t Size = 1;
-	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c1, shiftedAddress, pData, Size, 1000); //select register
+	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c3, shiftedAddress, pData, Size, 1000); //select register
 	if(status != HAL_OK)
 	{
 		// TODO: log error
 	}
 
-	status = HAL_I2C_Master_Receive(&hi2c1, shiftedAddress, pData, 3, 1000); //read from selected register
+	status = HAL_I2C_Master_Receive(&hi2c3, shiftedAddress, pData, 3, 1000); //read from selected register
 
 	uint32_t pressure = (uint32_t)(pData[0] << 12 | pData[1] << 4 | pData[2] >> 4);
 	return pressure;
@@ -159,7 +159,7 @@ void bme280ReadAllRaw(int32_t *UT, int32_t *UP, int32_t *UH)
 	uint8_t pData[8] = {0};
 	pData[0] = 0xF7; // Register of MSB pressure value.  Plan is to read 2 more registers after this one for LSB and XSB
 	uint16_t Size = 1;
-	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c1, shiftedAddress, pData, Size, 1000); //select register
+	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c3, shiftedAddress, pData, Size, 1000); //select register
 	if(status != HAL_OK)
 	{
 		// TODO: log error.  Generate a non-blocking error flag that starts to get printed out
@@ -167,7 +167,7 @@ void bme280ReadAllRaw(int32_t *UT, int32_t *UP, int32_t *UH)
 	}
 
 	Size = 6; // Since temperature and pressure are enabled only, and since they each need 3 bytes, we need to read a total of 6 bytes
-	status = HAL_I2C_Master_Receive(&hi2c1, shiftedAddress, pData, Size, 1000);
+	status = HAL_I2C_Master_Receive(&hi2c3, shiftedAddress, pData, Size, 1000);
 
 	*UP = (int32_t)((pData[0] << 12) | (pData[1] << 4) | (pData[2] >> 4));
 	*UT = (int32_t)((pData[3] << 12) | (pData[4] << 4) | (pData[5] >> 4));

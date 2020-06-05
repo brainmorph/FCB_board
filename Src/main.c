@@ -93,7 +93,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI1_Init();
-  MX_I2C1_Init();
+  MX_I2C3_Init();
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
   BMFC_BME280_Init(); // Initialize the BME280 sensor
@@ -150,10 +150,10 @@ int main(void)
 //	  volatile uint8_t configReg = bme280ReadReg(BME280_CONFIG_REG);
 //	  volatile uint8_t idReg = bme280ReadReg(0xD0); // should return 0x60
 
-	  HAL_Delay(50);
-	  BMFC_BME280_Init();
-	  bme280WriteReg(0xF4, 0x27); // wake the BME280 sensor and enable temperature and pressure
-	  HAL_Delay(50);
+	  //HAL_Delay(50);
+	  //BMFC_BME280_Init();
+	  //bme280WriteReg(0xF4, 0x27); // wake the BME280 sensor and enable temperature and pressure
+	  //HAL_Delay(50);
 
 	  BMFC_BME280_TriggerAltitudeCalculation(); // trigger altitude calculation
 
@@ -176,7 +176,7 @@ int main(void)
 
 	  // Transmit over RF
 	  loopCount++;
-	  if(loopCount % 99 == 0) // only send RF messages every 99th loop cycle
+	  if(loopCount % 9 == 0) // only send RF messages every 9th loop cycle
 	  {
 		  if(NRF24_write(myTxData, 32) != 0) // NRF maximum payload length is 32 bytes
 		  {
