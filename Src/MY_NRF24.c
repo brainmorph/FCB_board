@@ -273,27 +273,28 @@ bool NRF24_write( const void* buf, uint8_t len )
 	NRF24_resetStatus();
 	NRF24_startWrite(buf,len);
 	//Data monitor
-  uint8_t observe_tx;
-  uint8_t status;
-  uint32_t sent_at = HAL_GetTick();
+	uint8_t observe_tx;
+	uint8_t status;
+	uint32_t sent_at = HAL_GetTick();
 	const uint32_t timeout = 10; //ms to wait for timeout
+
 	do
-  {
-    NRF24_read_registerN(REG_OBSERVE_TX,&observe_tx,1);
+	{
+		NRF24_read_registerN(REG_OBSERVE_TX,&observe_tx,1);
 		//Get status register
 		status = NRF24_get_status();
-  }
-  while( ! ( status & ( _BV(BIT_TX_DS) | _BV(BIT_MAX_RT) ) ) && ( HAL_GetTick() - sent_at < timeout ) );
+	}
+	while( ! ( status & ( _BV(BIT_TX_DS) | _BV(BIT_MAX_RT) ) ) && ( HAL_GetTick() - sent_at < timeout ) );
 	
-	printConfigReg();
-	printStatusReg();
+	//printConfigReg();
+	//printStatusReg();
 	
 	bool tx_ok, tx_fail;
-  NRF24_whatHappened(&tx_ok,&tx_fail, &ack_payload_available);
+	NRF24_whatHappened(&tx_ok,&tx_fail, &ack_payload_available);
 	retStatus = tx_ok;
 	if ( ack_payload_available )
-  {
-    ack_payload_length = NRF24_getDynamicPayloadSize();
+	{
+		ack_payload_length = NRF24_getDynamicPayloadSize();
 	}
 	
 	//Power down

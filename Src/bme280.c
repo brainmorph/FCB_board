@@ -61,7 +61,7 @@ void BMFC_BME280_TriggerAltitudeCalculation(void)
 
 	volatile uint32_t temperature = BME280_CalcT(tRaw);
 	volatile uint32_t paPressure = BME280_CalcP(pRaw);
-	volatile float pascalFloat = ((float)paPressure)/256.0;
+	volatile float pascalFloat = ((float)paPressure)/256.0; // convert from Q24.8 format to pascal (decimal) value
 	volatile float hpaPressure = pascalFloat / 100.0;
 	uint32_t dummy = pRaw;
 	float dummy2 = pascalFloat;

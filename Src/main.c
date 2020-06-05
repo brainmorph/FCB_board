@@ -140,15 +140,20 @@ int main(void)
 
   AltimeterData_t altimeter = {0, 0};
 
+  int loopCount = 0;
   while (1)
   {
 #ifdef TX_SETTINGS
 	  /* Transmit data without waiting for ACK */
 
-	  //volatile uint8_t ctrlReg = bme280ReadReg(BME280_CTRL_MEAS_REG);
-	  //volatile uint8_t configReg = bme280ReadReg(BME280_CONFIG_REG);
+//	  volatile uint8_t ctrlReg = bme280ReadReg(BME280_CTRL_MEAS_REG);
+//	  volatile uint8_t configReg = bme280ReadReg(BME280_CONFIG_REG);
+//	  volatile uint8_t idReg = bme280ReadReg(0xD0); // should return 0x60
 
-	  HAL_Delay(10);
+	  HAL_Delay(50);
+	  BMFC_BME280_Init();
+	  bme280WriteReg(0xF4, 0x27); // wake the BME280 sensor and enable temperature and pressure
+	  HAL_Delay(50);
 
 	  BMFC_BME280_TriggerAltitudeCalculation(); // trigger altitude calculation
 
@@ -170,13 +175,17 @@ int main(void)
 	  HAL_UART_Transmit(&huart6, (uint8_t *)myTxData, strlen(myTxData), 10); // print success with 10 ms timeout
 
 	  // Transmit over RF
-	  if(NRF24_write(myTxData, 32) != 0) // NRF maximum payload length is 32 bytes
+	  loopCount++;
+	  if(loopCount % 99 == 0) // only send RF messages every 99th loop cycle
 	  {
-		  HAL_UART_Transmit(&huart6, (uint8_t *)"Tx success\r\n", strlen("Tx success\r\n"), 10); // print success with 10 ms timeout
+		  if(NRF24_write(myTxData, 32) != 0) // NRF maximum payload length is 32 bytes
+		  {
+			  HAL_UART_Transmit(&huart6, (uint8_t *)"Tx success\r\n", strlen("Tx success\r\n"), 10); // print success with 10 ms timeout
+		  }
 	  }
 
-
-	  HAL_Delay(1000); // delay a second
+	  //HAL_UART_Transmit(&huart6, (uint8_t *)"Just trying to add a ton of latency\r\n", strlen("Just trying to add a ton of latency\r\n"), 10); // print success with 10 ms timeout
+	  HAL_Delay(50); // delay a second
 
 	  HAL_UART_Transmit(&huart6, (uint8_t *)"Retrying...\r\n", strlen("Retrying...\r\n"), 10); // print success with 10 ms timeout
 #endif
