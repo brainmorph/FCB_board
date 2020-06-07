@@ -110,8 +110,8 @@ int main(void)
   volatile float filteredAltitude = 0;
   volatile float alpha = 0.1;
 
-//#define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
-#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
+#define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
+//#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
 
   NRF24_stopListening();   // just in case
 #ifdef TX_SETTINGS
@@ -143,10 +143,10 @@ int main(void)
   int loopCount = 0;
   while (1)
   {
-	  if(BMFC_BME280_ConfirmI2C_Comms(void) == 0)
-	  {
-		  // TODO: toggle LED
-	  }
+	  if(BMFC_BME280_ConfirmI2C_Comms() == 0) // confirm I2C with BME280 is still ok
+		  HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 0);
+	  else
+		  HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1);
 
 #ifdef TX_SETTINGS
 	  /* Transmit data without waiting for ACK */

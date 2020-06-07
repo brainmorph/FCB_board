@@ -31,7 +31,7 @@ float getCurrentAltitude(void);
 int32_t BME280_CalcT(int32_t UT);
 uint32_t BME280_CalcP(int32_t UP);
 
-uint8_t BMFC_BME280_ConfirmI2C_Comms(void) // Read chip ID and make sure everything is good
+uint8_t BMFC_BME280_ConfirmI2C_Comms(void); // Read chip ID and make sure everything is good
 
 
 // Compensation parameters structure
