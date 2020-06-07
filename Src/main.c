@@ -110,8 +110,8 @@ int main(void)
   volatile float filteredAltitude = 0;
   volatile float alpha = 0.1;
 
-#define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
-//#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
+//#define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
+#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
 
   NRF24_stopListening();   // just in case
 #ifdef TX_SETTINGS
@@ -175,10 +175,11 @@ int main(void)
 	  HAL_UART_Transmit(&huart6, (uint8_t *)myTxData, strlen(myTxData), 10); // print success with 10 ms timeout
 
 	  // Transmit over RF
+	  memcpy(myTxData, &filteredAltitude, sizeof(filteredAltitude)); // copy float value straight into the beginning of the transmit buffer
 	  loopCount++;
-	  if(loopCount % 9 == 0) // only send RF messages every 9th loop cycle
+	  if(loopCount % 1 == 0) // only transmit RF messages every Nth loop cycle
 	  {
-		  if(NRF24_write(myTxData, 32) != 0) // NRF maximum payload length is 32 bytes
+		  if(NRF24_write(myTxData, sizeof(myTxData)) != 0) // NRF maximum payload length is 32 bytes
 		  {
 			  HAL_UART_Transmit(&huart6, (uint8_t *)"Tx success\r\n", strlen("Tx success\r\n"), 10); // print success with 10 ms timeout
 		  }
@@ -194,10 +195,16 @@ int main(void)
 	  if(NRF24_available())
 	  {
 		  HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n", strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
-		  NRF24_read(myRxData, 32); // remember that NRF radio can at most transmit 32 bytes
+		  volatile float receivedAltitude = 0.3;
+		  NRF24_read(myRxData, sizeof(myRxData)); // remember that NRF radio can at most transmit 32 bytes
 		  myRxData[32] = '\r';
 		  myRxData[32 + 1] = '\n';
 
+		  receivedAltitude = *(float *)myRxData; // handle myRxData as a 4 byte float and read the value from it
+
+		  altimeter.preDecimal = (int) receivedAltitude;
+		  altimeter.postDecimal = (int)((receivedAltitude - altimeter.preDecimal) * 100);
+		  snprintf(myRxData, 32, "Received altitude: %d.%d\r\n", altimeter.preDecimal, altimeter.postDecimal);
 		  HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, 32+2, 10); // print success with 10 ms timeout
 	  }
 #endif
