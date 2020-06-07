@@ -49,6 +49,18 @@ void BMFC_BME280_Init(void)
 	  volatile int32_t dummy99 = altitude;
   }
   //---------------------------------
+
+  BMFC_BME280_ConfirmI2C_Comms();
+}
+
+// Read chip ID and make sure everything is good
+uint8_t BMFC_BME280_ConfirmI2C_Comms(void)
+{
+	if(bme280ReadReg(BME280_CHIP_ID_REG) != BME280_EXPECTED_CHIP_ID)
+	{
+		return 0; // return false
+	}
+	return ~0;  // return true
 }
 
 void BMFC_BME280_TriggerAltitudeCalculation(void)

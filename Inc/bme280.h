@@ -11,6 +11,7 @@
 #define BME280_CTRL_MEAS_REG 0xF4
 #define BME280_CONFIG_REG 0xF5
 #define BME280_CHIP_ID_REG	0xD0
+#define BME280_EXPECTED_CHIP_ID 0x60
 
 void BMFC_BME280_Init(void); // wakes the BME280 sensor and enables Temperature and Pressure readings
 void BMFC_BME280_TriggerAltitudeCalculation(void); // calculates filtered altitude value in meters
@@ -29,6 +30,9 @@ float getCurrentAltitude(void);
 
 int32_t BME280_CalcT(int32_t UT);
 uint32_t BME280_CalcP(int32_t UP);
+
+uint8_t BMFC_BME280_ConfirmI2C_Comms(void) // Read chip ID and make sure everything is good
+
 
 // Compensation parameters structure
 typedef struct {

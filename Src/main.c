@@ -143,6 +143,11 @@ int main(void)
   int loopCount = 0;
   while (1)
   {
+	  if(BMFC_BME280_ConfirmI2C_Comms(void) == 0)
+	  {
+		  // TODO: toggle LED
+	  }
+
 #ifdef TX_SETTINGS
 	  /* Transmit data without waiting for ACK */
 
