@@ -111,6 +111,8 @@ int main(void)
   volatile float filteredAltitude = 0;
   volatile float alpha = 0.1;
 
+#define UART_DEBUG
+
 #define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
 //#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
 
@@ -133,6 +135,22 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  typedef struct RadioPacket_t
+  {
+	  uint32_t count; // 4 bytes
+	  float altitude; // 4 bytes
+
+	  /* Fill in the rest of the struct to make it be 32 bytes in total */
+	  uint32_t garbage1; // 4 bytes
+	  uint32_t garbage2; // 4 bytes
+	  uint32_t garbage3; // 4 bytes
+	  uint32_t garbage4; // 4 bytes
+	  uint32_t garbage5; // 4 bytes
+	  uint32_t garbage6; // 4 bytes
+  }RadioPacket_t;
+
+  RadioPacket_t telemetryData = {0, 0.0f};
+
   typedef struct
   {
 	  volatile int preDecimal;		// signed 32 bit int
@@ -189,12 +207,21 @@ int main(void)
 	  memcpy(myTxData, &filteredAltitude,
 			  sizeof(filteredAltitude)); // copy float value straight into the beginning of the transmit buffer
 
+	  telemetryData.altitude = filteredAltitude;
+	  telemetryData.count++;
+
+
 	  loopCount++;
 	  if(loopCount % 1 == 0) // only transmit RF messages every Nth loop cycle
 	  {
-		  if(NRF24_write(myTxData, sizeof(myTxData)) != 0)
+		  if(NRF24_write(&telemetryData, sizeof(telemetryData)) != 0)
 		  {
 #ifdef UART_DEBUG
+			  snprintf(myTxData, 32, "Sent %lu bytes over radio\r\n",
+					  sizeof(telemetryData));
+			  HAL_UART_Transmit(&huart6, myTxData,
+					  sizeof(myTxData), 10); // 10 ms timeout
+
 			  HAL_UART_Transmit(&huart6, (uint8_t *)"Tx success\r\n",
 					  strlen("Tx success\r\n"), 10); // 10 ms timeout
 #endif
