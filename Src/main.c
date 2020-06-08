@@ -169,37 +169,45 @@ int main(void)
 	  altimeter.postDecimal = (int)((altitude - altimeter.preDecimal) * 100);
 
 
-	  //snprintf(myTxData, 32, "Altitude in meters: %d.%d\r\n", altimeter.preDecimal, altimeter.postDecimal);
-	  //HAL_UART_Transmit(&huart6, (uint8_t *)myTxData, strlen(myTxData), 10); // print success with 10 ms timeout
+//	  snprintf(myTxData, 32, "Altitude in meters: %d.%d\r\n",
+//			  altimeter.preDecimal, altimeter.postDecimal);
+//	  HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
+//			  strlen(myTxData), 10); // print success with 10 ms timeout
 
 	  // do the calculation again but for filtered altitude values
 	  filteredAltitude = (alpha * altitude) + ((1-alpha) * filteredAltitude);
 	  altimeter.preDecimal = (int) filteredAltitude;
 	  altimeter.postDecimal = (int)((filteredAltitude - altimeter.preDecimal) * 100);
-	  snprintf(myTxData, 32, "Filtered altitude: %d.%d\r\n", altimeter.preDecimal, altimeter.postDecimal);
-	  HAL_UART_Transmit(&huart6, (uint8_t *)myTxData, strlen(myTxData), 10); // print success with 10 ms timeout
+	  snprintf(myTxData, 32, "Filtered altitude: %d.%d\r\n",
+			  altimeter.preDecimal, altimeter.postDecimal);
+	  HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
+			  strlen(myTxData), 10); // 10 ms timeout
 
 	  // Transmit over RF
-	  memcpy(myTxData, &filteredAltitude, sizeof(filteredAltitude)); // copy float value straight into the beginning of the transmit buffer
+	  memcpy(myTxData, &filteredAltitude,
+			  sizeof(filteredAltitude)); // copy float value straight into the beginning of the transmit buffer
+
 	  loopCount++;
 	  if(loopCount % 1 == 0) // only transmit RF messages every Nth loop cycle
 	  {
-		  if(NRF24_write(myTxData, sizeof(myTxData)) != 0) // NRF maximum payload length is 32 bytes
+		  if(NRF24_write(myTxData, sizeof(myTxData)) != 0)
 		  {
-			  HAL_UART_Transmit(&huart6, (uint8_t *)"Tx success\r\n", strlen("Tx success\r\n"), 10); // print success with 10 ms timeout
+			  HAL_UART_Transmit(&huart6, (uint8_t *)"Tx success\r\n",
+					  strlen("Tx success\r\n"), 10); // 10 ms timeout
 		  }
 	  }
 
-	  //HAL_UART_Transmit(&huart6, (uint8_t *)"Just trying to add a ton of latency\r\n", strlen("Just trying to add a ton of latency\r\n"), 10); // print success with 10 ms timeout
-	  HAL_Delay(50); // delay a second
+//	  HAL_Delay(50); // Is this necessary?
 
-	  HAL_UART_Transmit(&huart6, (uint8_t *)"Retrying...\r\n", strlen("Retrying...\r\n"), 10); // print success with 10 ms timeout
+	  HAL_UART_Transmit(&huart6, (uint8_t *)"Retrying...\r\n",
+			  strlen("Retrying...\r\n"), 10); // 10 ms timeout
 #endif
 
 #ifdef RX_SETTINGS
 	  if(NRF24_available())
 	  {
-		  HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n", strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
+		  HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n",
+				  strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
 		  volatile float receivedAltitude = 0.3;
 		  NRF24_read(myRxData, sizeof(myRxData)); // remember that NRF radio can at most transmit 32 bytes
 		  myRxData[32] = '\r';
