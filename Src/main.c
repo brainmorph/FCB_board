@@ -144,18 +144,6 @@ int main(void)
   int loopCount = 0;
   while (1)
   {
-	  if(loopCount%2)
-	  {
-		  HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1);
-	  }
-	  else
-	  {
-		  HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 0);
-	  }
-
-	  loopCount++;
-	  continue;
-
 
 	  if(BMFC_BME280_ConfirmI2C_Comms() == 0) // confirm I2C with BME280 is still ok
 	  {
