@@ -113,8 +113,8 @@ int main(void)
 
 #define UART_DEBUG
 
-#define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
-//#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
+//#define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
+#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
 
   NRF24_stopListening();   // just in case
 #ifdef TX_SETTINGS
@@ -240,19 +240,21 @@ int main(void)
 	  {
 		  HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n",
 				  strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
-		  volatile float receivedAltitude = 0.3;
-		  NRF24_read(myRxData, sizeof(myRxData)); // remember that NRF radio can at most transmit 32 bytes
-		  myRxData[32] = '\r';
-		  myRxData[32 + 1] = '\n';
 
-		  receivedAltitude = *(float *)myRxData; // handle myRxData as a 4 byte float and read the value from it
+		  NRF24_read(&telemetryData, sizeof(telemetryData)); // remember that NRF radio can at most transmit 32 bytes
+
+		  //receivedAltitude = *(float *)myRxData; // handle myRxData as a 4 byte float and read the value from it
+		  volatile float receivedAltitude = telemetryData.altitude;
 
 		  altimeter.preDecimal = (int) receivedAltitude;
 		  altimeter.postDecimal = (int)((receivedAltitude - altimeter.preDecimal) * 100);
-		  snprintf(myRxData, 32, "Received altitude: %d.%d\r\n", altimeter.preDecimal, altimeter.postDecimal);
-		  HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, 32+2, 10); // print success with 10 ms timeout
+		  snprintf(myRxData, 32, "count=%d altitude: %d.%d.\r\n", telemetryData.count, altimeter.preDecimal, altimeter.postDecimal);
+#ifdef UART_DEBUG
+		  HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, sizeof(myRxData), 10); // print success with 10 ms timeout
+#endif // UART_DEBUG
 	  }
 #endif // RX_SETTINGS
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
