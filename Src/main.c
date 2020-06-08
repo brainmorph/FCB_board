@@ -162,9 +162,7 @@ int main(void)
 #ifdef TX_SETTINGS
 	  /* Transmit data without waiting for ACK */
 
-	  BMFC_BME280_TriggerAltitudeCalculation(); // trigger altitude calculation
-
-	  volatile float altitude = getCurrentAltitude();
+	  volatile float altitude = getLastAltitude();
 
 	  /* convert float to string.  STAY BACK */
 	  altimeter.preDecimal = (int) altitude;
