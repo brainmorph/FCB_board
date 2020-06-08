@@ -29,6 +29,7 @@
 /* USER CODE BEGIN Includes */
 #include "MY_NRF24.h"
 #include "bme280.h"
+#include "logging.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -134,8 +135,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   typedef struct
   {
-	  volatile int preDecimal;	// signed 32 bit int
-	  volatile int postDecimal; 	// signed 32 bit int
+	  volatile int preDecimal;		// signed 32 bit int
+	  volatile int postDecimal;		// signed 32 bit int
   }AltimeterData_t;
 
   AltimeterData_t altimeter = {0, 0};
@@ -144,9 +145,18 @@ int main(void)
   while (1)
   {
 	  if(BMFC_BME280_ConfirmI2C_Comms() == 0) // confirm I2C with BME280 is still ok
-		  HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 0);
-	  else
+	  {
 		  HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1);
+	  }
+	  else
+	  {
+		  HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 0);
+	  }
+
+	  if(log_totalErrorCount() != 0)
+	  {
+		  HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1);
+	  }
 
 #ifdef TX_SETTINGS
 	  /* Transmit data without waiting for ACK */
