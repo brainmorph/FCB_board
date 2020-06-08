@@ -162,15 +162,6 @@ int main(void)
 #ifdef TX_SETTINGS
 	  /* Transmit data without waiting for ACK */
 
-//	  volatile uint8_t ctrlReg = bme280ReadReg(BME280_CTRL_MEAS_REG);
-//	  volatile uint8_t configReg = bme280ReadReg(BME280_CONFIG_REG);
-//	  volatile uint8_t idReg = bme280ReadReg(0xD0); // should return 0x60
-
-	  //HAL_Delay(50);
-	  //BMFC_BME280_Init();
-	  //bme280WriteReg(0xF4, 0x27); // wake the BME280 sensor and enable temperature and pressure
-	  //HAL_Delay(50);
-
 	  BMFC_BME280_TriggerAltitudeCalculation(); // trigger altitude calculation
 
 	  volatile float altitude = getCurrentAltitude();
@@ -191,8 +182,10 @@ int main(void)
 	  altimeter.postDecimal = (int)((filteredAltitude - altimeter.preDecimal) * 100);
 	  snprintf(myTxData, 32, "Filtered altitude: %d.%d\r\n",
 			  altimeter.preDecimal, altimeter.postDecimal);
+#ifdef UART_DEBUG
 	  HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
 			  strlen(myTxData), 10); // 10 ms timeout
+#endif
 
 	  // Transmit over RF
 	  memcpy(myTxData, &filteredAltitude,
@@ -203,16 +196,19 @@ int main(void)
 	  {
 		  if(NRF24_write(myTxData, sizeof(myTxData)) != 0)
 		  {
+#ifdef UART_DEBUG
 			  HAL_UART_Transmit(&huart6, (uint8_t *)"Tx success\r\n",
 					  strlen("Tx success\r\n"), 10); // 10 ms timeout
+#endif
 		  }
 	  }
 
-//	  HAL_Delay(50); // Is this necessary?
-
+#ifdef UART_DEBUG
 	  HAL_UART_Transmit(&huart6, (uint8_t *)"Retrying...\r\n",
 			  strlen("Retrying...\r\n"), 10); // 10 ms timeout
-#endif
+#endif // UART_DEBUG
+
+#endif // TX_SETTINGS
 
 #ifdef RX_SETTINGS
 	  if(NRF24_available())
@@ -231,7 +227,7 @@ int main(void)
 		  snprintf(myRxData, 32, "Received altitude: %d.%d\r\n", altimeter.preDecimal, altimeter.postDecimal);
 		  HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, 32+2, 10); // print success with 10 ms timeout
 	  }
-#endif
+#endif // RX_SETTINGS
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
