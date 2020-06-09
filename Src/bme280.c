@@ -17,7 +17,14 @@ static int32_t t_fine;
 
 void BMFC_BME280_Init(void)
 {
-  volatile uint8_t registerVal = bme280ReadReg(0xD0);
+  if(bme280ReadReg(BME280_CHIP_ID_REG) != BME280_EXPECTED_CHIP_ID)
+  {
+	  /* There is a very serious problem at this point if the address of the BME280 chip cannot be read */
+	  log_incrementErrorCount();
+
+	  /* Potentially do more here as this means I2C comms with BME280 sensor are DOWN */
+  }
+
   // TODO: does a delay ever need to happen between successive I2C comms?
   bme280WriteReg(0xF4, 0x27); // wake the BME280 sensor and enable temperature and pressure
 
@@ -34,20 +41,22 @@ void BMFC_BME280_Init(void)
 	  bme280ReadAllRaw(&tRaw, &pRaw, &hRaw);
 
 	  volatile uint32_t temperature = BME280_CalcT(tRaw);
+	  temperature = temperature;
 	  volatile uint32_t paPressure = BME280_CalcP(pRaw);
 	  volatile float pascalFloat = ((float)paPressure)/256.0;
 	  volatile float hpaPressure = pascalFloat / 100.0;
-	  uint32_t dummy = pRaw;
 	  float dummy2 = pascalFloat;
+	  dummy2++;
 
 
 	  // Human-readable temperature, pressure and humidity value
-	  volatile uint32_t pressure;
-	  volatile uint32_t humidity;
+	  //volatile uint32_t pressure;
+	  //volatile uint32_t humidity;
 
 	  // Human-readable altitude value
 	  volatile float altitude = BME280_Altitude_Meters(hpaPressure);
 	  volatile int32_t dummy99 = altitude;
+	  dummy99++;
   }
   //---------------------------------
 
@@ -74,20 +83,24 @@ void BMFC_BME280_TriggerAltitudeCalculation(void)
 	bme280ReadAllRaw(&tRaw, &pRaw, &hRaw);
 
 	volatile uint32_t temperature = BME280_CalcT(tRaw);
+	temperature = temperature + 1 - 1; 	// stupid operation to get rid of unused variable error
 	volatile uint32_t paPressure = BME280_CalcP(pRaw);
 	volatile float pascalFloat = ((float)paPressure)/256.0; // convert from Q24.8 format to pascal (decimal) value
 	volatile float hpaPressure = pascalFloat / 100.0;
 	uint32_t dummy = pRaw;
+	dummy = dummy + 1 - 1;				// stupid operation to get rid of unused variable error
 	float dummy2 = pascalFloat;
+	dummy2 = dummy2 +1 - 1;				// stupid operation to get rid of unused variable error
 
 
 	// Human-readable temperature, pressure and humidity value
-	volatile uint32_t pressure;
-	volatile uint32_t humidity;
+	//volatile uint32_t pressure;
+	//volatile uint32_t humidity;
 
 	// Human-readable altitude value
 	volatile float altitude = BME280_Altitude_Meters(hpaPressure);
 	volatile int32_t dummy99 = altitude;
+	dummy99 = dummy99 + 1 - 1;			// stupid operation to get rid of unused variable error
 }
 
 
@@ -161,7 +174,7 @@ uint32_t bme280ReadPressure()
 	if(status != HAL_OK)
 	{
 		// TODO: log error
-		log_increaseErrorCount();
+		log_incrementErrorCount();
 	}
 
 	status = HAL_I2C_Master_Receive(&hi2c3, shiftedAddress, pData, 3, 1000); //read from selected register

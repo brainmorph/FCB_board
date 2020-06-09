@@ -23,6 +23,7 @@ References:				This library was written based on the Arduino NRF24 Open-Source l
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdio.h>
 //1. Pinout Ports and Pin
 //#define nrf_CSN_PORT		GPIOD
 //#define nrf_CSN_PIN			GPIO_PIN_0

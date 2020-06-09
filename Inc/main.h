@@ -66,7 +66,7 @@ void Error_Handler(void);
 #define SPI1_CS_Pin GPIO_PIN_7
 #define SPI1_CS_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
+	#define UART_DEBUG
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
