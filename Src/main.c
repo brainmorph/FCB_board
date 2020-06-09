@@ -113,8 +113,8 @@ int main(void)
 
 #define UART_DEBUG
 
-//#define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
-#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
+#define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
+//#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
 
   NRF24_stopListening();   // just in case
 #ifdef TX_SETTINGS
@@ -158,6 +158,8 @@ int main(void)
   }AltimeterData_t;
 
   AltimeterData_t altimeter = {0, 0};
+
+  HAL_Delay(3000); // is this necessary?
 
   int loopCount = 0;
   while (1)
@@ -238,8 +240,8 @@ int main(void)
 #ifdef RX_SETTINGS
 	  if(NRF24_available())
 	  {
-		  HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n",
-				  strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
+//		  HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n",
+//				  strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
 
 		  NRF24_read(&telemetryData, sizeof(telemetryData)); // remember that NRF radio can at most transmit 32 bytes
 
@@ -248,9 +250,21 @@ int main(void)
 
 		  altimeter.preDecimal = (int) receivedAltitude;
 		  altimeter.postDecimal = (int)((receivedAltitude - altimeter.preDecimal) * 100);
-		  snprintf(myRxData, 32, "count=%d altitude: %d.%d.\r\n", telemetryData.count, altimeter.preDecimal, altimeter.postDecimal);
+		  snprintf(myRxData, 32, "%d alt: %d.%d \r\n", telemetryData.count, altimeter.preDecimal, altimeter.postDecimal);
 #ifdef UART_DEBUG
-		  HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, sizeof(myRxData), 10); // print success with 10 ms timeout
+		  HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
+
+		  static int packetsLost = 0;
+		  static lastCount;
+		  if(telemetryData.count - (lastCount+1) != 0)
+		  {
+			  packetsLost += (telemetryData.count - (lastCount+1));
+		  }
+		  snprintf(myRxData, 32, "Packets lost = %d \r\n", packetsLost);
+		  HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
+
+		  lastCount = telemetryData.count;
+
 #endif // UART_DEBUG
 	  }
 #endif // RX_SETTINGS
