@@ -15,52 +15,54 @@
 
 static int32_t t_fine;
 
-void BMFC_BME280_Init(void)
+/* Initializes the BME280 pressure sensor
+	Return non-zero if successful */
+int BMFC_BME280_Init(void)
 {
-  if(bme280ReadReg(BME280_CHIP_ID_REG) != BME280_EXPECTED_CHIP_ID)
-  {
-	  /* There is a very serious problem at this point if the address of the BME280 chip cannot be read */
-	  log_incrementErrorCount();
+	if(BMFC_BME280_ConfirmI2C_Comms() == 0)
+	{
+		return 0;
+	}
 
-	  /* Potentially do more here as this means I2C comms with BME280 sensor are DOWN */
-  }
+	// TODO: does a delay ever need to happen between successive I2C comms?
+	bme280WriteReg(0xF4, 0x27); // wake the BME280 sensor and enable temperature and pressure
 
-  // TODO: does a delay ever need to happen between successive I2C comms?
-  bme280WriteReg(0xF4, 0x27); // wake the BME280 sensor and enable temperature and pressure
+	int32_t tRaw = 0;
+	int32_t pRaw = 0;
+	int32_t hRaw = 0;
 
-  int32_t tRaw = 0;
-  int32_t pRaw = 0;
-  int32_t hRaw = 0;
+	BME280_Read_Calibration();
 
-  BME280_Read_Calibration();
+	HAL_Delay(100);
 
-  HAL_Delay(100);
+	//Do 1 altitude calculation as a check
+	{
+		bme280ReadAllRaw(&tRaw, &pRaw, &hRaw);
 
-  //Do 1 altitude calculation as a check
-  {
-	  bme280ReadAllRaw(&tRaw, &pRaw, &hRaw);
-
-	  volatile uint32_t temperature = BME280_CalcT(tRaw);
-	  temperature = temperature;
-	  volatile uint32_t paPressure = BME280_CalcP(pRaw);
-	  volatile float pascalFloat = ((float)paPressure)/256.0;
-	  volatile float hpaPressure = pascalFloat / 100.0;
-	  float dummy2 = pascalFloat;
-	  dummy2++;
+		volatile uint32_t temperature = BME280_CalcT(tRaw);
+		temperature = temperature;
+		volatile uint32_t paPressure = BME280_CalcP(pRaw);
+		volatile float pascalFloat = ((float)paPressure)/256.0;
+		volatile float hpaPressure = pascalFloat / 100.0;
+		float dummy2 = pascalFloat;
+		dummy2++;
 
 
-	  // Human-readable temperature, pressure and humidity value
-	  //volatile uint32_t pressure;
-	  //volatile uint32_t humidity;
+		// Human-readable temperature, pressure and humidity value
+		//volatile uint32_t pressure;
+		//volatile uint32_t humidity;
 
-	  // Human-readable altitude value
-	  volatile float altitude = BME280_Altitude_Meters(hpaPressure);
-	  volatile int32_t dummy99 = altitude;
-	  dummy99++;
-  }
-  //---------------------------------
+		// Human-readable altitude value
+		volatile float altitude = BME280_Altitude_Meters(hpaPressure);
+		if(altitude == 0)
+		{
+			log_incrementErrorCount();
+			return 0;
+		}
+	}
+	//---------------------------------
 
-  BMFC_BME280_ConfirmI2C_Comms();
+	return BMFC_BME280_ConfirmI2C_Comms(); // Try to read chip ID one last time
 }
 
 // Read chip ID and make sure everything is good.  Return 0 if problem occurred
@@ -71,7 +73,7 @@ uint8_t BMFC_BME280_ConfirmI2C_Comms(void)
 		log_incrementErrorCount();
 		return 0; // return false
 	}
-	return ~0;  // return true
+	return 1;  // return true
 }
 
 void BMFC_BME280_TriggerAltitudeCalculation(void)

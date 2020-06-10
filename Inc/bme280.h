@@ -13,7 +13,7 @@
 #define BME280_CHIP_ID_REG	0xD0
 #define BME280_EXPECTED_CHIP_ID 0x60
 
-void BMFC_BME280_Init(void); // wakes the BME280 sensor and enables Temperature and Pressure readings
+int BMFC_BME280_Init(void); // wakes the BME280 sensor and enables Temperature and Pressure readings
 void BMFC_BME280_TriggerAltitudeCalculation(void); // calculates filtered altitude value in meters
 float BME280_Altitude_Meters(float localhPa); // returns last calculated altitude in meters
 

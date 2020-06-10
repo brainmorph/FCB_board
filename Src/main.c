@@ -110,7 +110,7 @@ int main(void)
  
   while (1)
   {
-    /*THIS CODE SHOULD NOT BE REACHED */
+    /*THIS SECTION SHOULD NOT BE REACHED */
 
     /* USER CODE END WHILE */
 
