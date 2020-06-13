@@ -14,6 +14,7 @@
 #include "MY_NRF24.h"
 #include "bme280.h"
 #include "logging.h"
+#include "transceiver.h"
 
 typedef struct RadioPacket_t
 {
@@ -27,7 +28,7 @@ typedef struct RadioPacket_t
 	uint32_t garbage4; // 4 bytes
 	uint32_t garbage5; // 4 bytes
 	uint32_t garbage6; // 4 bytes
-}RadioPacket_t;
+}RadioPacket_t; // this packet MUST BE 32 bytes in size
 
 RadioPacket_t telemetryData = {0, 0.0f};
 
@@ -95,8 +96,7 @@ void FC_Flight_Loop(void)
             HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1);
         }
 
-#ifdef TX_SETTINGS
-		/* Transmit data without waiting for ACK */
+
 
 		volatile float altitude = getLastAltitude();
 
@@ -114,51 +114,33 @@ void FC_Flight_Loop(void)
 		filteredAltitude = (alpha * altitude) + ((1-alpha) * filteredAltitude);
 		altimeter.preDecimal = (int) filteredAltitude;
 		altimeter.postDecimal = (int)((filteredAltitude - altimeter.preDecimal) * 100);
-		snprintf(myTxData, 32, "Filtered altitude: %d.%d\r\n",
-				altimeter.preDecimal, altimeter.postDecimal);
-#ifdef UART_DEBUG
-		HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
-				strlen(myTxData), 10); // 10 ms timeout
-#endif
-
-		// Transmit over RF
-		// typecasting &filteredAltitude to float* removes dropped volatility warning
-		memcpy(myTxData, (float*)(&filteredAltitude),
-				sizeof(filteredAltitude)); // copy float value straight into the beginning of the transmit buffer
 
 		telemetryData.altitude = filteredAltitude;
-		telemetryData.count++;
-
 
 		fcLoopCount++;
-		if(fcLoopCount % 1 == 0) // only transmit RF messages every Nth loop cycle
+		if(fcLoopCount % 10 == 0) // only transmit RF messages every Nth loop cycle
 		{
-			if(NRF24_write(&telemetryData, sizeof(telemetryData)) != 0)
+			if(FC_Transmit_32B(&telemetryData)) // transmit data without waiting for ACK
 			{
 #ifdef UART_DEBUG
-				snprintf(myTxData, 32, "Sent %u bytes over radio\r\n",
-						sizeof(telemetryData));
-				HAL_UART_Transmit(&huart6, (uint8_t*)myTxData,
-						sizeof(myTxData), 10); // 10 ms timeout
+				HAL_UART_Transmit(&huart6, (uint8_t *)"Transmit success...\r\n",
+					strlen("Transmit success...\r\n"), 10); // print success with 10 ms timeout
 
-				HAL_UART_Transmit(&huart6, (uint8_t *)"Tx success\r\n",
-						strlen("Tx success\r\n"), 10); // 10 ms timeout
+				snprintf(myTxData, 32, "Loop # %d   Packet # %lu\r\n",
+						fcLoopCount, telemetryData.count);
+				HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
+						strlen(myTxData), 10); // 10 ms timeout
 #endif
 			}
+			telemetryData.count++; // increment packet number
 		}
 
-#ifdef UART_DEBUG
-		HAL_UART_Transmit(&huart6, (uint8_t *)"Retrying...\r\n",
-				strlen("Retrying...\r\n"), 10); // 10 ms timeout
-#endif // UART_DEBUG
-
-#endif // TX_SETTINGS
 
 		NRF24_startListening();
 
 		HAL_Delay(200);
 
-#ifdef RX_SETTINGS
+
 		if(NRF24_available())
 		{
 #ifdef UART_DEBUG
@@ -191,7 +173,7 @@ void FC_Flight_Loop(void)
 #endif // UART_DEBUG
 
 		} // if(NRF24_available())
-#endif // RX_SETTINGS
+
 		NRF24_stopListening();   // just in case
 		HAL_Delay(200);
 
