@@ -81,8 +81,8 @@ void FC_Init(void)
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-#define DRONE
-//#define GROUND_STATION
+//#define DRONE
+#define GROUND_STATION
 	while(1)
     {
 #ifdef DRONE
@@ -122,8 +122,9 @@ void FC_Flight_Loop(void)
 				HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
 						strlen(myTxData), 10); // 10 ms timeout
 #endif
+
+				telemetryData.count++; // increment packet number
 			}
-			telemetryData.count++; // increment packet number
 		}
 
 
@@ -170,6 +171,30 @@ void FC_Flight_Loop(void)
 
 
 #ifdef GROUND_STATION
+
+		fcLoopCount++;
+		if(fcLoopCount % 10 == 0) // only transmit RF messages every Nth loop cycle
+		{
+			if(FC_Transmit_32B(&groundData)) // transmit data without waiting for ACK
+			{
+#ifdef UART_DEBUG
+				HAL_UART_Transmit(&huart6, (uint8_t *)"Transmit success...\r\n",
+					strlen("Transmit success...\r\n"), 10); // print success with 10 ms timeout
+
+				snprintf(myTxData, 32, "Sent packet # %lu\r\n",
+						groundData.count);
+				HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
+						strlen(myTxData), 10); // 10 ms timeout
+#endif
+
+				groundData.count++;
+			}
+		}
+
+		NRF24_startListening();
+
+		HAL_Delay(50);
+
 		if(NRF24_available())
 		{
 #ifdef UART_DEBUG
