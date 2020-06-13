@@ -31,6 +31,7 @@ typedef struct RadioPacket_t
 }RadioPacket_t; // this packet MUST BE 32 bytes in size
 
 RadioPacket_t telemetryData = {0, 0.0f};
+RadioPacket_t groundData = {0, 0.0f};
 
 typedef struct
 {
@@ -80,8 +81,11 @@ void FC_Init(void)
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
+#define DRONE
+//#define GROUND_STATION
 	while(1)
     {
+#ifdef DRONE
     	if(BMFC_BME280_ConfirmI2C_Comms() == 0) // confirm I2C with BME280 is still ok
         {
             HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1);
@@ -96,24 +100,11 @@ void FC_Flight_Loop(void)
             HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1);
         }
 
-
-
+        /* Compute altitude from BME280 pressure */
 		volatile float altitude = getLastAltitude();
 
-		/* convert float to string.  STAY BACK */
-		altimeter.preDecimal = (int) altitude;
-		altimeter.postDecimal = (int)((altitude - altimeter.preDecimal) * 100);
-
-
-		//	  snprintf(myTxData, 32, "Altitude in meters: %d.%d\r\n",
-		//			  altimeter.preDecimal, altimeter.postDecimal);
-		//	  HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
-		//			  strlen(myTxData), 10); // print success with 10 ms timeout
-
-		// do the calculation again but for filtered altitude values
+		// average the altitude readings with weight
 		filteredAltitude = (alpha * altitude) + ((1-alpha) * filteredAltitude);
-		altimeter.preDecimal = (int) filteredAltitude;
-		altimeter.postDecimal = (int)((filteredAltitude - altimeter.preDecimal) * 100);
 
 		telemetryData.altitude = filteredAltitude;
 
@@ -138,13 +129,51 @@ void FC_Flight_Loop(void)
 
 		NRF24_startListening();
 
-		HAL_Delay(200);
+		HAL_Delay(50);
 
 
 		if(NRF24_available())
 		{
 #ifdef UART_DEBUG
 			HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n", 
+				strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
+#endif // UART_DEBUG
+
+			NRF24_read(&groundData, sizeof(groundData)); // remember that NRF radio can at most transmit 32 bytes
+
+			//receivedAltitude = *(float *)myRxData; // handle myRxData as a 4 byte float and read the value from it
+			volatile float receivedAltitude = groundData.altitude;
+
+			altimeter.preDecimal = (int) receivedAltitude;
+			altimeter.postDecimal = (int)((receivedAltitude - altimeter.preDecimal) * 100);
+
+#ifdef UART_DEBUG
+			snprintf(myRxData, 32, "Gnd packets %lu \r\n", groundData.count);
+			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
+
+			static int packetsLost = 0;
+			static int lastGroundCount = 0;
+			if(groundData.count - (lastGroundCount+1) != 0) // if packets have been dropped
+			{
+				packetsLost += (groundData.count - (lastGroundCount+1));
+			}
+			snprintf(myRxData, 32, "Packets lost = %d \r\n", packetsLost);
+			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
+
+			lastGroundCount = groundData.count;
+#endif // UART_DEBUG
+
+		} // if(NRF24_available())
+
+		HAL_Delay(50);
+#endif // DRONE
+
+
+#ifdef GROUND_STATION
+		if(NRF24_available())
+		{
+#ifdef UART_DEBUG
+			HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n",
 				strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
 #endif // UART_DEBUG
 
@@ -174,8 +203,7 @@ void FC_Flight_Loop(void)
 
 		} // if(NRF24_available())
 
-		NRF24_stopListening();   // just in case
-		HAL_Delay(200);
+#endif // GROUND_STATION
 
     } // while(1)
 } // void BMFC_Flight_Loop(void)
