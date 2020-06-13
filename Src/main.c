@@ -104,7 +104,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   FC_Init();
-  HAL_Delay(3000); // is this necessary?
+  HAL_Delay(2000); // is this necessary?
   FC_Flight_Loop();
  
  

@@ -57,7 +57,7 @@ void FC_Init(void)
 
 
 #define TX_SETTINGS // configure this build for NRF24L01 Transmitter Mode
-//#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
+#define RX_SETTINGS // configure this build for NRF24L01 Receiver Mode
 
 	NRF24_stopListening();   // just in case
 
@@ -72,7 +72,7 @@ void FC_Init(void)
 	NRF24_setPayloadSize(32);// 32 bytes is maximum for NRF... just use it
 
 #ifdef RX_SETTINGS
-	NRF24_startListening();
+//	NRF24_startListening();
 #endif
 }
 
@@ -154,6 +154,10 @@ void FC_Flight_Loop(void)
 
 #endif // TX_SETTINGS
 
+		NRF24_startListening();
+
+		HAL_Delay(200);
+
 #ifdef RX_SETTINGS
 		if(NRF24_available())
 		{
@@ -169,13 +173,13 @@ void FC_Flight_Loop(void)
 
 			altimeter.preDecimal = (int) receivedAltitude;
 			altimeter.postDecimal = (int)((receivedAltitude - altimeter.preDecimal) * 100);
-			snprintf(myRxData, 32, "%d alt: %d.%d \r\n", telemetryData.count, altimeter.preDecimal, altimeter.postDecimal);
+			snprintf(myRxData, 32, "%u alt: %d.%d \r\n", (uint8_t)telemetryData.count, altimeter.preDecimal, altimeter.postDecimal);
 
 #ifdef UART_DEBUG
 			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
 
 			static int packetsLost = 0;
-			static lastCount;
+			static int lastCount = 0;
 			if(telemetryData.count - (lastCount+1) != 0)
 			{
 				packetsLost += (telemetryData.count - (lastCount+1));
@@ -188,6 +192,8 @@ void FC_Flight_Loop(void)
 
 		} // if(NRF24_available())
 #endif // RX_SETTINGS
+		NRF24_stopListening();   // just in case
+		HAL_Delay(200);
 
     } // while(1)
 } // void BMFC_Flight_Loop(void)
