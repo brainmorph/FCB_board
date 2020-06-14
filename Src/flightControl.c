@@ -81,23 +81,23 @@ void FC_Init(void)
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-//#define DRONE
-#define GROUND_STATION
+#define DRONE
+//#define GROUND_STATION
 	while(1)
     {
 #ifdef DRONE
-    	if(BMFC_BME280_ConfirmI2C_Comms() == 0) // confirm I2C with BME280 is still ok
+    	if(BMFC_BME280_ConfirmI2C_Comms() == 0) // check for BME280 comm. issues
         {
-            HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1);
+            HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1); // turn on LED
         }
         else
         {
-            HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 0);
+            HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 0); // turn off LED
         }
 
-        if(log_totalErrorCount() != 0)
+        if(log_totalErrorCount() != 0) // check for any error occurances
         {
-            HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1);
+            HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1); // turn on LED
         }
 
         /* Compute altitude from BME280 pressure */
@@ -186,7 +186,6 @@ void FC_Flight_Loop(void)
 				HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
 						strlen(myTxData), 10); // 10 ms timeout
 #endif
-
 				groundData.count++;
 			}
 		}

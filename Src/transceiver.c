@@ -10,7 +10,7 @@ int FC_Transmit_32B(void* bufferAddr)
 
 	HAL_Delay(100); // TODO: Is delay necessary here?
 
-	if(NRF24_write(bufferAddr, 32) != 0)
+	if(NRF24_write(bufferAddr, 32) != 0) // transmit 32 bytes starting from buffer address
 	{
 		// Success
 		return 1;
