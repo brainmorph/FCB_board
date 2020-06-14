@@ -5,6 +5,7 @@
  *      Author: DC
  */
 
+#include "flightcontrol.h"
 #include "main.h"
 #include "i2c.h"
 #include "spi.h"
@@ -48,6 +49,8 @@ char myRxData[50];
 volatile float filteredAltitude = 0;
 volatile float alpha = 0.1;
 
+
+
 void FC_Init(void)
 {
 	BMFC_BME280_Init(); // Initialize the BME280 sensor
@@ -78,13 +81,18 @@ void FC_Init(void)
 #endif
 }
 
+
+
+
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-#define DRONE
-//#define GROUND_STATION
+//#define DRONE
+#define GROUND_STATION
 	while(1)
     {
+		FC_Ms_Timer_Start(); // restart timer
+
 #ifdef DRONE
     	if(BMFC_BME280_ConfirmI2C_Comms() == 0) // check for BME280 comm. issues
         {
@@ -192,7 +200,7 @@ void FC_Flight_Loop(void)
 
 		NRF24_startListening();
 
-		HAL_Delay(50);
+		HAL_Delay(2);
 
 		if(NRF24_available())
 		{
@@ -229,5 +237,25 @@ void FC_Flight_Loop(void)
 
 #endif // GROUND_STATION
 
+
+		volatile uint32_t period = FC_Elapsed_Ms_Since_Timer_Start();
+		if(period < 1)
+			period = 1;
+		volatile float frequency = 1 / (period / 1000.0);
+		frequency++;
     } // while(1)
 } // void BMFC_Flight_Loop(void)
+
+
+/* Restart the millisecond timer */
+static uint32_t tickstart;
+void FC_Ms_Timer_Start(void)
+{
+	tickstart = HAL_GetTick(); // take note of current ms tick count
+}
+
+/* Return milliseconds since timer was started */
+uint32_t FC_Elapsed_Ms_Since_Timer_Start(void)
+{
+	return HAL_GetTick() - tickstart;
+}
