@@ -8,6 +8,9 @@
 #ifndef BME280_H_
 #define BME280_H_
 
+#include <stdint.h>
+
+
 #define BME280_CTRL_MEAS_REG 0xF4
 #define BME280_CONFIG_REG 0xF5
 #define BME280_CHIP_ID_REG	0xD0

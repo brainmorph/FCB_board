@@ -16,6 +16,7 @@
 #include "bme280.h"
 #include "logging.h"
 #include "transceiver.h"
+#include "altitude.h"
 
 typedef struct RadioPacket_t
 {
@@ -46,8 +47,6 @@ AltimeterData_t altimeter = {0, 0};
 uint64_t TxRxpipeAddrs = 0x11223344AA;
 char myTxData[32] = "Hello goobers";
 char myRxData[50];
-volatile float filteredAltitude = 0;
-volatile float alpha = 0.1;
 
 
 
@@ -84,37 +83,45 @@ void FC_Init(void)
 
 
 
+/* Toggles LED based on state of I2C comms with BME280 AND based on any errors */
+void Check_Error_Status() {
+	if (BMFC_BME280_ConfirmI2C_Comms() == 0)    // check for BME280 comm. issues
+			{
+		HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1); // turn on LED
+	} else {
+		HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 0); // turn off LED
+	}
+	if (log_totalErrorCount() != 0) // check for any error occurances
+			{
+		HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1); // turn on LED
+	}
+}
+
+
+
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-//#define DRONE
-#define GROUND_STATION
+#define FLIGHT_PLATFORM
+//#define GROUND_STATION
 	while(1)
     {
 		FC_Ms_Timer_Start(); // restart timer
 
-#ifdef DRONE
-    	if(BMFC_BME280_ConfirmI2C_Comms() == 0) // check for BME280 comm. issues
-        {
-            HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1); // turn on LED
-        }
-        else
-        {
-            HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 0); // turn off LED
-        }
+#ifdef FLIGHT_PLATFORM
+		Check_Error_Status(); // toggle LED based on any error detection
 
-        if(log_totalErrorCount() != 0) // check for any error occurances
-        {
-            HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1); // turn on LED
-        }
-
-        /* Compute altitude from BME280 pressure */
-		volatile float altitude = getLastAltitude();
-
-		// average the altitude readings with weight
-		filteredAltitude = (alpha * altitude) + ((1-alpha) * filteredAltitude);
-
-		telemetryData.altitude = filteredAltitude;
+		/* Gather all relevant sensor data */
+		telemetryData.altitude = CurrentAltitude();
+//		telemetryData.pitch = CurrentPitchAngle(); // from -180 to 180
+//		telemetryData.roll = currentRollAngle(); // from -180 to 180
+//		telemetryData.yaw = currentYawAngle(); // from -180 to 180
+//		telemetryData.longitude = currentLongitude();
+//		telemetryData.latitude = currentLatitude();
+//		telemetryData.motorPmwFL = ??; // Front Left
+//		telemetryData.motorPwmFR = ??; // Front Right
+//		telemetryData.motorPwmBL = ??; // Back Left
+//		telemetryData.motorPwmBR = ??; // Back right
 
 		fcLoopCount++;
 		if(fcLoopCount % 10 == 0) // only transmit RF messages every Nth loop cycle
@@ -175,7 +182,7 @@ void FC_Flight_Loop(void)
 		} // if(NRF24_available())
 
 		HAL_Delay(50);
-#endif // DRONE
+#endif // FLIGHT_PLATFORM
 
 
 #ifdef GROUND_STATION
@@ -238,6 +245,7 @@ void FC_Flight_Loop(void)
 #endif // GROUND_STATION
 
 
+		// Timer test
 		volatile uint32_t period = FC_Elapsed_Ms_Since_Timer_Start();
 		if(period < 1)
 			period = 1;
