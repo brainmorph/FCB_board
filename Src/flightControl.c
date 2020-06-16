@@ -17,22 +17,28 @@
 #include "logging.h"
 #include "transceiver.h"
 #include "altitude.h"
+#include "timer.h"
+#include "pitchRollYaw.h"
+
+/* Private Variables */
+static uint32_t MainFlightLoopTimer = 0;
 
 typedef struct RadioPacket_t
 {
 	uint32_t count; // 4 bytes
 	float altitude; // 4 bytes
 
+	float pitch; 	// 4 bytes
+	float roll; 	// 4 bytes
+	float yaw; 		// 4 bytes
+
 	/* Fill in the rest of the struct to make it be 32 bytes in total */
-	uint32_t garbage1; // 4 bytes
-	uint32_t garbage2; // 4 bytes
-	uint32_t garbage3; // 4 bytes
 	uint32_t garbage4; // 4 bytes
 	uint32_t garbage5; // 4 bytes
 	uint32_t garbage6; // 4 bytes
 }RadioPacket_t; // this packet MUST BE 32 bytes in size
 
-RadioPacket_t telemetryData = {0, 0.0f};
+RadioPacket_t telemetryData = {0, 0.0, 0.0, 0.0, 0.0};
 RadioPacket_t groundData = {0, 0.0f};
 
 typedef struct
@@ -106,16 +112,16 @@ void FC_Flight_Loop(void)
 //#define GROUND_STATION
 	while(1)
     {
-		FC_Ms_Timer_Start(); // restart timer
+		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
 
 #ifdef FLIGHT_PLATFORM
 		Check_Error_Status(); // toggle LED based on any error detection
 
 		/* Gather all relevant sensor data */
 		telemetryData.altitude = CurrentAltitude();
-//		telemetryData.pitch = CurrentPitchAngle(); // from -180 to 180
-//		telemetryData.roll = currentRollAngle(); // from -180 to 180
-//		telemetryData.yaw = currentYawAngle(); // from -180 to 180
+		telemetryData.pitch = CurrentPitchAngle(); // from -180 to 180
+		telemetryData.roll = CurrentRollAngle(); // from -180 to 180
+		telemetryData.yaw = CurrentYawAngle(); // from -180 to 180
 //		telemetryData.longitude = currentLongitude();
 //		telemetryData.latitude = currentLatitude();
 //		telemetryData.motorPmwFL = ??; // Front Left
@@ -246,7 +252,7 @@ void FC_Flight_Loop(void)
 
 
 		// Timer test
-		volatile uint32_t period = FC_Elapsed_Ms_Since_Timer_Start();
+		volatile uint32_t period = Elapsed_Ms_Since_Timer_Start(&MainFlightLoopTimer);
 		if(period < 1)
 			period = 1;
 		volatile float frequency = 1 / (period / 1000.0);
@@ -255,15 +261,4 @@ void FC_Flight_Loop(void)
 } // void BMFC_Flight_Loop(void)
 
 
-/* Restart the millisecond timer */
-static uint32_t tickstart;
-void FC_Ms_Timer_Start(void)
-{
-	tickstart = HAL_GetTick(); // take note of current ms tick count
-}
 
-/* Return milliseconds since timer was started */
-uint32_t FC_Elapsed_Ms_Since_Timer_Start(void)
-{
-	return HAL_GetTick() - tickstart;
-}

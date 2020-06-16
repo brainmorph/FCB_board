@@ -18,7 +18,7 @@ static float alpha = 0.1;
 float CurrentAltitude(void)
 {
     /* Compute altitude from BME280 pressure */
-	volatile float altitude = getLastAltitude();
+	volatile float altitude = getAltitude();
 
 	/* Filter the altitude readings with weight */
 	filteredAltitude = (alpha * altitude) + ((1-alpha) * filteredAltitude);

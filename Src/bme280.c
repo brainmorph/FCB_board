@@ -302,7 +302,7 @@ float BME280_Altitude_Meters(float localhPa)
 	return altitude;
 }
 
-float getLastAltitude(void)
+float getAltitude(void)
 {
 	BMFC_BME280_TriggerAltitudeCalculation();
 
