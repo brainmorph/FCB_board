@@ -42,7 +42,7 @@ float CurrentYawAngle(void)
 	return yawAngle;
 }
 
-void TriggerMPU6050Read(void)
+static void ReadMPU0650(void)
 {
 	ReadAcceleration(&accelX, &accelY, &accelZ);
 	ReadGyro(&gyroX, &gyroY, &gyroZ);
@@ -65,6 +65,8 @@ static int PRY_Count = 0; // count how many times this loop has been executed
 static uint32_t PRY_Timer = 0;
 void CalculatePitchRollYaw(void)
 {
+	ReadMPU0650(); // get most recent sensor data
+
 	float deltaT = Elapsed_Ms_Since_Timer_Start(&PRY_Timer);
 	deltaT /= 1000; // convert to units of Seconds
 

@@ -13,4 +13,6 @@
 void ReadAcceleration(float* floatX, float* floatY, float* floatZ);
 void ReadGyro(float* floatX, float* floatY, float* floatZ);
 
+void InitMPU(void);
+
 #endif /* MPU6050_H */

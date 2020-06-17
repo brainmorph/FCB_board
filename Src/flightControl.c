@@ -19,6 +19,7 @@
 #include "altitude.h"
 #include "timer.h"
 #include "pitchRollYaw.h"
+#include "mpu6050.h"
 
 /* Private Variables */
 static uint32_t MainFlightLoopTimer = 0;
@@ -84,6 +85,8 @@ void FC_Init(void)
 #ifdef RX_SETTINGS
 //	NRF24_startListening();
 #endif
+
+	InitMPU();
 }
 
 
@@ -118,6 +121,8 @@ void FC_Flight_Loop(void)
 		Check_Error_Status(); // toggle LED based on any error detection
 
 		/* Gather all relevant sensor data */
+		CalculatePitchRollYaw();
+
 		telemetryData.altitude = CurrentAltitude();
 		telemetryData.pitch = CurrentPitchAngle(); // from -180 to 180
 		telemetryData.roll = CurrentRollAngle(); // from -180 to 180
