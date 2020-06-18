@@ -13,5 +13,6 @@ float CurrentRollAngle(void);
 float CurrentYawAngle(void);
 
 void CalculatePitchRollYaw(void);
+void CollectInitalSensorValues(void);
 
 #endif /* PITCHROLLYAW_H_ */

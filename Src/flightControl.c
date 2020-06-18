@@ -87,6 +87,7 @@ void FC_Init(void)
 #endif
 
 	InitMPU();
+	CollectInitalSensorValues();
 }
 
 

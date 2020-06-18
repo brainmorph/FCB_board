@@ -6,10 +6,10 @@
  */
 
 #include "pitchRollYaw.h"
-
 #include "mpu6050.h"
 #include "timer.h"
 #include "math.h"
+#include "main.h"
 
 
 static float accelX = 0.0;
@@ -26,6 +26,7 @@ static float envAccelX=0.0, envAccelY=0.0, envAccelZ=0.0, envGyroX=0.0, envGyroY
 static float pitchAngle = 0.0;
 static float rollAngle = 0.0;
 static float yawAngle = 0.0;
+
 
 float CurrentPitchAngle(void)
 {
@@ -108,4 +109,25 @@ void CalculatePitchRollYaw(void)
 	// complementary filter to correct drift error over time
 	rollAngle = 0.9995 * rollAngle + 0.0005 * accelRollAngle;
 	pitchAngle = 0.9995 * pitchAngle + 0.0005 * accelPitchAngle;
+}
+
+
+void CollectInitalSensorValues(void)
+{
+	// average some samples at the beginning
+	for(int i=0; i<400; i++)
+	{
+		// read acceleration, filter with a running average
+		ReadAcceleration(&accelX, &accelY, &accelZ);
+		ReadGyro(&gyroX, &gyroY, &gyroZ);
+
+		envAccelX += accelX / 400.0;
+		envAccelY += accelY / 400.0;
+		envAccelZ += accelZ / 400.0;
+		envGyroX += gyroX / 400.0;
+		envGyroY += gyroY / 400.0;
+		envGyroZ += gyroZ / 400.0;
+
+		HAL_Delay(10);
+	}
 }
