@@ -11,27 +11,31 @@
 /* Static Function Declarations */
 static uint8_t readMPUreg(uint8_t reg);
 static void writeMPUreg(uint8_t reg, uint8_t value);
-static void configMPUFilter();
+//static void configMPUFilter();
 
 
 void InitMPU(void)
 {
+	volatile uint8_t value = 0;
+
 	//read a register over I2C
-	readMPUreg(0x75);
-	readMPUreg(0x6B);
+	value = readMPUreg(0x75);
+	value = readMPUreg(0x6B);
 	writeMPUreg(0x6B, 0x00); // wake the IMU
 	readMPUreg(0x6B);
 	readMPUreg(0x6B);
 
 	readMPUreg(0x1C); // read accel config register
 	writeMPUreg(0x1C, 0x10); // configure fullscale for +-8 g
-	readMPUreg(0x1C); // confirm
+	value = readMPUreg(0x1C); // confirm
 
 	readMPUreg(0x1B); // read gyro config register
 	writeMPUreg(0x1B, 0x08); // configure fullscale for +- 500 degress/s
-	readMPUreg(0x1B); // confirm
+	value = readMPUreg(0x1B); // confirm
 
-	configMPUFilter(); // apply filtering to IMU readings
+	value = value;
+
+//	configMPUFilter(); // apply filtering to IMU readings
 }
 
 /*
@@ -79,17 +83,19 @@ static void writeMPUreg(uint8_t reg, uint8_t value) // TODO: move to separate mo
 	}
 }
 
-static void configMPUFilter()
-{
-	// Read register
-	volatile int16_t config = 0;
-	config = readMPUreg(0x1A);
-
-	config &= 0xF8;
-	config |= 0x0; // this is the value that goes into register
-
-	writeMPUreg(0x1A, config);
-}
+//static void configMPUFilter()
+//{
+//	// Read register
+//	volatile int16_t config = 0;
+//	config = readMPUreg(0x1A);
+//
+//	config &= 0xF8;
+//	config |= 0x0; // this is the value that goes into register
+//
+//	writeMPUreg(0x1A, config);
+//	volatile uint8_t test = readMPUreg(0x1A);
+//	test = test;
+//}
 
 void ReadAcceleration(float* floatX, float* floatY, float* floatZ)
 {
@@ -113,15 +119,16 @@ void ReadAcceleration(float* floatX, float* floatY, float* floatZ)
 //	logValues[logIndex].ay = accelY;
 //	logValues[logIndex].az = accelZ;
 
-//	volatile int16_t temp = 0; // temperature
-//	temp = readMPUreg(0x41); // MSB
-//	temp = temp << 8;
-//	temp |= (0x00FF) & readMPUreg(0x42); // LSB
+	volatile int16_t temp = 0; // temperature
+	temp = readMPUreg(0x41); // MSB
+	temp = temp << 8;
+	temp |= (0x00FF) & readMPUreg(0x42); // LSB
 
 //	*floatX = (float)accelX * (float)(1.0/16384.0); //multiply reading with Full Scale value
 //	*floatY = (float)accelY * (float)(1.0/16384.0); //multiply reading with Full Scale value
 //	*floatZ = (float)accelZ * (float)(1.0/16384.0); //multiply reading with Full Scale value
-//	//*floatTemp = ((float)temp / 340.0) + 36.53;
+	volatile float temperature = ((float)temp / 340.0) + 36.53;
+	temperature = temperature;
 
 	*floatX = (float)accelX * (8.0/32767.0); // FS=+-8g
 	*floatY = (float)accelY * (8.0/32767.0);
