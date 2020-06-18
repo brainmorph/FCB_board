@@ -112,12 +112,12 @@ uint8_t bme280ReadReg(uint8_t reg)
 	uint16_t shiftedAddress = deviceAddress << 1;
 	uint8_t pData[3] = {0};
 	pData[0] = reg; //register in question
-	uint16_t Size = 1;
 	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c3,
-			shiftedAddress, pData, Size, 1000); //select register
+			shiftedAddress, pData, 1, 1000); //select register
 	if(status != HAL_OK)
 	{
 		// TODO: log error
+		log_incrementErrorCount();
 	}
 
 	uint8_t value = 0;
@@ -132,9 +132,8 @@ void bme280ReadRegs(uint8_t reg, uint16_t size, uint8_t* data)
 	uint16_t shiftedAddress = deviceAddress << 1;
 	uint8_t pData[3] = {0};
 	pData[0] = reg; //register in question
-	uint16_t Size = 1;
 	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c3,
-			shiftedAddress, pData, Size, 1000); //select register
+			shiftedAddress, pData, 1, 1000); //select register
 	if(status != HAL_OK)
 	{
 		// TODO: log error
@@ -142,7 +141,7 @@ void bme280ReadRegs(uint8_t reg, uint16_t size, uint8_t* data)
 	}
 
 	status = HAL_I2C_Master_Receive(&hi2c3,
-			shiftedAddress, data, size, 1000); //read from register
+			shiftedAddress, data, size, 1000); //read size bytes from register
 
 
 }

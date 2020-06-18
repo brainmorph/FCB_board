@@ -7,9 +7,11 @@
 
 #include "mpu6050.h"
 #include "i2c.h"
+#include "logging.h"
 
 /* Static Function Declarations */
 static uint8_t readMPUreg(uint8_t reg);
+static void readMPUregs(uint8_t reg, uint16_t size, uint8_t* data);
 static void writeMPUreg(uint8_t reg, uint8_t value);
 //static void configMPUFilter();
 
@@ -51,16 +53,44 @@ static uint8_t readMPUreg(uint8_t reg)
 	uint16_t shiftedAddress = deviceAddress << 1;
 	uint8_t pData[100];
 	pData[0] = reg; //register in question
-	uint16_t Size = 1;
-	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c3, shiftedAddress, pData, Size, 1000); //select register
+	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c3, shiftedAddress, pData, 1, 1000); //select register
 	if(status != HAL_OK)
 	{
 		// TODO: log error
+		log_incrementErrorCount();
 	}
 
 	uint8_t value = 0;
 	status = HAL_I2C_Master_Receive(&hi2c3, shiftedAddress, &value, 1, 1000); //read from register
 	return value;
+}
+
+/*
+ * Read multiple registers from MPU6050 module.
+ *
+ * Input: register address
+ *
+ * Output: fill data buffer with register values
+ */
+static void readMPUregs(uint8_t reg, uint16_t size, uint8_t* data)
+{
+	uint16_t deviceAddress = 0x68;
+	uint16_t shiftedAddress = deviceAddress << 1;
+	uint8_t pData[100];
+	pData[0] = reg; //register in question
+	HAL_StatusTypeDef status = HAL_I2C_Master_Transmit(&hi2c3, shiftedAddress, pData, 1, 1000); //select register
+	if(status != HAL_OK)
+	{
+		// TODO: log error
+		log_incrementErrorCount();
+	}
+
+	status = HAL_I2C_Master_Receive(&hi2c3, shiftedAddress, data, size, 1000); //read from register
+	if(status != HAL_OK)
+	{
+		// TODO: log error
+		log_incrementErrorCount();
+	}
 }
 
 /*
@@ -99,30 +129,15 @@ static void writeMPUreg(uint8_t reg, uint8_t value) // TODO: move to separate mo
 
 void ReadAcceleration(float* floatX, float* floatY, float* floatZ)
 {
-	// Read x,y,z acceleration registers. TODO: guarantee that these are from same sample
-	volatile int16_t accelX = 0;
-	accelX = readMPUreg(0x3B); //read accel X MSB value
-	accelX = accelX << 8;
-	accelX |= (0x00FF) & readMPUreg(0x3C); //read accel X LSB value
+	// Read x,y,z all acceleration in one go to guarantee they're from same sample
+	uint8_t data[10] = {0};
+	readMPUregs(0x3B, 8, data); // read 6 consecutive bytes
 
-	volatile int16_t accelY = 0;
-	accelY = readMPUreg(0x3D);
-	accelY = accelY << 8;
-	accelY |= (0x00FF) & readMPUreg(0x3E); // LSB
+	volatile int16_t accelX = (data[0] << 8) | data[1];
+	volatile int16_t accelY = (data[2] << 8) | data[3];
+	volatile int16_t accelZ = (data[4] << 8) | data[5];
 
-	volatile int16_t accelZ = 0;
-	accelZ = readMPUreg(0x3F);
-	accelZ = accelZ << 8;
-	accelZ |= (0x00FF) & readMPUreg(0x40); // LSB
-
-//	logValues[logIndex].ax = accelX;
-//	logValues[logIndex].ay = accelY;
-//	logValues[logIndex].az = accelZ;
-
-	volatile int16_t temp = 0; // temperature
-	temp = readMPUreg(0x41); // MSB
-	temp = temp << 8;
-	temp |= (0x00FF) & readMPUreg(0x42); // LSB
+	volatile int16_t temp = (data[6] << 8) | data[7];
 
 //	*floatX = (float)accelX * (float)(1.0/16384.0); //multiply reading with Full Scale value
 //	*floatY = (float)accelY * (float)(1.0/16384.0); //multiply reading with Full Scale value
