@@ -54,7 +54,7 @@ static void ReadMPU0650(void)
 float lpfAx = 0.0; // low pass filter accelerometer but not gyro
 float lpfAy = 0.0; // low pass filter accelerometer but not gyro
 float lpfAz = 0.0; // low pass filter accelerometer but not gyro
-//static int PRY_Count = 0; // count how many times this loop has been executed
+static int PRY_Count = 0; // count how many times this loop has been executed
 static uint32_t PRY_Timer = 0;
 void CalculatePitchRollYaw(void)
 {
@@ -112,6 +112,8 @@ void CalculatePitchRollYaw(void)
 	// complementary filter to correct drift error over time
 	rollAngle = 0.99 * rollAngle + 0.01 * accelRollAngle;
 	pitchAngle = 0.99 * pitchAngle + 0.01 * accelPitchAngle;
+
+	PRY_Count++;
 }
 
 
