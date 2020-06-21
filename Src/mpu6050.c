@@ -136,21 +136,19 @@ void ReadAcceleration(float* floatX, float* floatY, float* floatZ)
 	uint8_t data[10] = {0};
 	readMPUregs(0x3B, 8, data); // read consecutive bytes
 
-	volatile int16_t accelX = (data[0] << 8) | data[1];
-	volatile int16_t accelY = (data[2] << 8) | data[3];
-	volatile int16_t accelZ = (data[4] << 8) | data[5];
+	volatile int16_t aX = (data[0] << 8) | data[1];
+	volatile int16_t aY = (data[2] << 8) | data[3];
+	volatile int16_t aZ = (data[4] << 8) | data[5];
 
 	volatile int16_t temp = (data[6] << 8) | data[7];
 
-//	*floatX = (float)accelX * (float)(1.0/16384.0); //multiply reading with Full Scale value
-//	*floatY = (float)accelY * (float)(1.0/16384.0); //multiply reading with Full Scale value
-//	*floatZ = (float)accelZ * (float)(1.0/16384.0); //multiply reading with Full Scale value
 	volatile float temperature = ((float)temp / 340.0) + 36.53;
 	temperature = temperature;
 
-	*floatX = (float)accelX * (8.0/32767.0); // FS=+-8g
-	*floatY = (float)accelY * (8.0/32767.0);
-	*floatZ = (float)accelZ * (8.0/32767.0);
+
+	*floatX = (float)aX * (8.0/32767.0); // FS=+-8g
+	*floatY = (float)aY * (8.0/32767.0);
+	*floatZ = (float)aZ * (8.0/32767.0);
 
 	//convert from g to m/s^2
 	*floatX *= 9.807;
@@ -162,32 +160,17 @@ void ReadAcceleration(float* floatX, float* floatY, float* floatZ)
 
 void ReadGyro(float* floatX, float* floatY, float* floatZ)
 {
-	// Read x,y,z acceleration registers. TODO: guarantee that these are from same sample
-	volatile int16_t gyroX = 0;
-	gyroX = readMPUreg(0x43); //read accel X MSB value
-	gyroX = gyroX << 8;
-	gyroX |= (0x00FF) & readMPUreg(0x44); //read gyro X LSB value
+	// Read x,y,z all gyro in one go to guarantee they're from same sample
+	uint8_t data[10] = {0};
+	readMPUregs(0x43, 8, data); // read consecutive bytes
 
-	volatile int16_t gyroY = 0;
-	gyroY = readMPUreg(0x45);
-	gyroY = gyroY << 8;
-	gyroY |= (0x00FF) & readMPUreg(0x46); // LSB
+	volatile int16_t gX = (data[0] << 8) | data[1];
+	volatile int16_t gY = (data[2] << 8) | data[3];
+	volatile int16_t gZ = (data[4] << 8) | data[5];
 
-	volatile int16_t gyroZ = 0;
-	gyroZ = readMPUreg(0x47);
-	gyroZ = gyroZ << 8;
-	gyroZ |= (0x00FF) & readMPUreg(0x48); // LSB
 
-//	logValues[logIndex].gx = gyroX;
-//	logValues[logIndex].gy = gyroY;
-//	logValues[logIndex].gz = gyroZ;
-
-//	*floatX = (float)gyroX * (float)(1.0/131.0); //multiply reading with Full Scale value
-//	*floatY = (float)gyroY * (float)(1.0/131.0); //multiply reading with Full Scale value
-//	*floatZ = (float)gyroZ * (float)(1.0/131.0); //multiply reading with Full Scale value
-
-	*floatX = (float)gyroX * (500.0/32767.0); // FS=+-500 deg/s
-	*floatY = (float)gyroY * (500.0/32767.0);
-	*floatZ = (float)gyroZ * (500.0/32767.0);
+	*floatX = (float)gX * (500.0/32767.0); // FS=+-500 deg/s
+	*floatY = (float)gY * (500.0/32767.0);
+	*floatZ = (float)gZ * (500.0/32767.0);
 
 }
