@@ -129,9 +129,12 @@ static void writeMPUreg(uint8_t reg, uint8_t value) // TODO: move to separate mo
 
 void ReadAcceleration(float* floatX, float* floatY, float* floatZ)
 {
+	volatile uint8_t test1 = readMPUreg(0x1C);
+	test1 = test1;
+
 	// Read x,y,z all acceleration in one go to guarantee they're from same sample
 	uint8_t data[10] = {0};
-	readMPUregs(0x3B, 8, data); // read 6 consecutive bytes
+	readMPUregs(0x3B, 8, data); // read consecutive bytes
 
 	volatile int16_t accelX = (data[0] << 8) | data[1];
 	volatile int16_t accelY = (data[2] << 8) | data[3];
