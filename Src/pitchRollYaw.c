@@ -77,6 +77,11 @@ void CalculatePitchRollYaw(void)
 	Ms_Timer_Start(&PRY_Timer); // restart timer
 	deltaT /= 1000; // convert to seconds
 
+	// subtract out initial gyro values
+	gyroX -= envGyroX;
+	gyroY -= envGyroY;
+	gyroZ -= envGyroZ;
+
 	/* --- Log data */
 	volatile static uint32_t i_da = 0;
 	volatile static uint32_t j_da = 0;
@@ -110,10 +115,7 @@ void CalculatePitchRollYaw(void)
 	/* --- End of data logging */
 
 
-	// subtract out initial gyro values
-	gyroX -= envGyroX;
-	gyroY -= envGyroY;
-	gyroZ -= envGyroZ;
+
 
 //	if(PRY_Count < 10)
 //		deltaT = 0.01;
