@@ -160,7 +160,7 @@ void FC_Flight_Loop(void)
 
 		NRF24_startListening();
 
-		HAL_Delay(2);
+		//HAL_Delay(2);
 
 
 		if(NRF24_available())
@@ -196,7 +196,7 @@ void FC_Flight_Loop(void)
 
 		} // if(NRF24_available())
 
-		HAL_Delay(2);
+		//HAL_Delay(2);
 #endif // FLIGHT_PLATFORM
 
 

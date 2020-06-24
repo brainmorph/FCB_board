@@ -8,7 +8,7 @@ int FC_Transmit_32B(void* bufferAddr)
 {
 	NRF24_stopListening();   // TODO: How long does this call take and is it necessary?
 
-	HAL_Delay(100); // TODO: Is delay necessary here?
+	//HAL_Delay(2); // TODO: Is delay necessary here?
 
 	if(NRF24_write(bufferAddr, 32) != 0) // transmit 32 bytes starting from buffer address
 	{
