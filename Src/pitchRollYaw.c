@@ -19,6 +19,18 @@ static float gyroX = 0.0;
 static float gyroY = 0.0;
 static float gyroZ = 0.0;
 
+typedef struct
+{
+	float ax;
+	float ay;
+	float az;
+	float gx;
+	float gy;
+	float gz;
+	float dt;
+
+} SensorLogPacket;
+
 /* Initial measurements of each MPU register */
 //static float envAccelX=0.0, envAccelY=0.0, envAccelZ=0.0;
 static float envGyroX=0.0, envGyroY=0.0, envGyroZ = 0.0;
@@ -56,19 +68,52 @@ float lpfAy = 0.0; // low pass filter accelerometer but not gyro
 float lpfAz = 0.0; // low pass filter accelerometer but not gyro
 static int PRY_Count = 0; // count how many times this loop has been executed
 static uint32_t PRY_Timer = 0;
+static float deltaT = 0.0f;
 void CalculatePitchRollYaw(void)
 {
 	ReadMPU0650(); // get most recent sensor data
+
+	deltaT = Elapsed_Ms_Since_Timer_Start(&PRY_Timer);
+	Ms_Timer_Start(&PRY_Timer); // restart timer
+	deltaT /= 1000; // convert to seconds
+
+	/* --- Log data */
+	volatile static uint32_t i_da = 0;
+	volatile static uint32_t j_da = 0;
+	volatile static SensorLogPacket dataAccumulator[100];
+	if(i_da < 500 && i_da >= 400)
+	{
+		dataAccumulator[j_da].ax = accelX;
+		dataAccumulator[j_da].ay = accelY;
+		dataAccumulator[j_da].az = accelZ;
+
+		dataAccumulator[j_da].gx = gyroX;
+		dataAccumulator[j_da].gy = gyroY;
+		dataAccumulator[j_da].gz = gyroZ;
+
+		dataAccumulator[j_da].dt = deltaT;
+
+		j_da++;
+	}
+	i_da++;
+
+	if(i_da > 500)
+	{
+		dataAccumulator[0] = dataAccumulator[0];
+		while(1)
+		{
+			volatile int getStuck = 0;
+			getStuck = getStuck;
+		}
+	}
+
+	/* --- End of data logging */
+
 
 	// subtract out initial gyro values
 	gyroX -= envGyroX;
 	gyroY -= envGyroY;
 	gyroZ -= envGyroZ;
-
-	float deltaT = Elapsed_Ms_Since_Timer_Start(&PRY_Timer);
-	deltaT /= 1000; // convert to units of Seconds
-
-	Ms_Timer_Start(&PRY_Timer); // restart timer
 
 //	if(PRY_Count < 10)
 //		deltaT = 0.01;
@@ -110,20 +155,32 @@ void CalculatePitchRollYaw(void)
 
 
 	// complementary filter to correct drift error over time
-	rollAngle = 0.99 * rollAngle + 0.01 * accelRollAngle;
-	pitchAngle = 0.99 * pitchAngle + 0.01 * accelPitchAngle;
+	rollAngle = 1.0 * rollAngle + 0.0 * accelRollAngle;
+	pitchAngle = 1.0 * pitchAngle + 0.0 * accelPitchAngle;
 
 	PRY_Count++;
 }
 
+float LastDeltaT(void)
+{
+	return deltaT;
+}
 
 void CollectInitalSensorValues(void)
 {
-	// average some samples at the beginning
+	/* Throw out the first 100 samples */
+	for(int i=0; i<100; i++)
+	{
+		// Throw out samples
+		ReadAcceleration(&accelX, &accelY, &accelZ);
+		ReadGyro(&gyroX, &gyroY, &gyroZ);
+	}
+
+	/* Average N samples */
 	for(int i=0; i<400; i++)
 	{
 		// read acceleration, filter with a running average
-//		ReadAcceleration(&accelX, &accelY, &accelZ);
+		ReadAcceleration(&accelX, &accelY, &accelZ);
 		ReadGyro(&gyroX, &gyroY, &gyroZ);
 
 //		envAccelX += accelX / 400.0;

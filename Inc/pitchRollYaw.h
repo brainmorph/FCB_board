@@ -11,6 +11,7 @@
 float CurrentPitchAngle(void);
 float CurrentRollAngle(void);
 float CurrentYawAngle(void);
+float LastDeltaT(void);
 
 void CalculatePitchRollYaw(void);
 void CollectInitalSensorValues(void);

@@ -33,8 +33,9 @@ typedef struct RadioPacket_t
 	float roll; 	// 4 bytes
 	float yaw; 		// 4 bytes
 
+	float deltaT;	// 4 bytes
+
 	/* Fill in the rest of the struct to make it be 32 bytes in total */
-	uint32_t garbage4; // 4 bytes
 	uint32_t garbage5; // 4 bytes
 	uint32_t garbage6; // 4 bytes
 }RadioPacket_t; // this packet MUST BE 32 bytes in size
@@ -128,12 +129,14 @@ void FC_Flight_Loop(void)
 		telemetryData.pitch = CurrentPitchAngle(); // from -180 to 180
 		telemetryData.roll = CurrentRollAngle(); // from -180 to 180
 		telemetryData.yaw = CurrentYawAngle(); // from -180 to 180
+		telemetryData.deltaT = LastDeltaT();
 //		telemetryData.longitude = currentLongitude();
 //		telemetryData.latitude = currentLatitude();
 //		telemetryData.motorPmwFL = ??; // Front Left
 //		telemetryData.motorPwmFR = ??; // Front Right
 //		telemetryData.motorPwmBL = ??; // Back Left
 //		telemetryData.motorPwmBR = ??; // Back right
+
 
 		fcLoopCount++;
 		if(fcLoopCount % 10 == 0) // only transmit RF messages every Nth loop cycle
