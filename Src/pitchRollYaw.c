@@ -10,7 +10,7 @@
 #include "timer.h"
 #include "math.h"
 #include "main.h"
-
+#include "sensorLogging.h"
 
 static float accelX = 0.0;
 static float accelY = 0.0;
@@ -83,34 +83,36 @@ void CalculatePitchRollYaw(void)
 	gyroZ -= envGyroZ;
 
 	/* --- Log data */
-	volatile static uint32_t i_da = 0;
-	volatile static uint32_t j_da = 0;
-	volatile static SensorLogPacket dataAccumulator[1200];
-	if(i_da < 1600 && i_da >= 400)
-	{
-		dataAccumulator[j_da].ax = accelX;
-		dataAccumulator[j_da].ay = accelY;
-		dataAccumulator[j_da].az = accelZ;
+	log_mpu6050(accelX, accelY, accelZ, gyroX, gyroY, gyroZ, deltaT);
 
-		dataAccumulator[j_da].gx = gyroX;
-		dataAccumulator[j_da].gy = gyroY;
-		dataAccumulator[j_da].gz = gyroZ;
-
-		dataAccumulator[j_da].dt = deltaT;
-
-		j_da++;
-	}
-	i_da++;
-
-	if(i_da > 1600)
-	{
-		dataAccumulator[0] = dataAccumulator[0];
-		while(1)
-		{
-			volatile int getStuck = 0;
-			getStuck = getStuck;
-		}
-	}
+//	volatile static uint32_t i_da = 0;
+//	volatile static uint32_t j_da = 0;
+//	volatile static SensorLogPacket dataAccumulator[1200];
+//	if(i_da < 1600 && i_da >= 400)
+//	{
+//		dataAccumulator[j_da].ax = accelX;
+//		dataAccumulator[j_da].ay = accelY;
+//		dataAccumulator[j_da].az = accelZ;
+//
+//		dataAccumulator[j_da].gx = gyroX;
+//		dataAccumulator[j_da].gy = gyroY;
+//		dataAccumulator[j_da].gz = gyroZ;
+//
+//		dataAccumulator[j_da].dt = deltaT;
+//
+//		j_da++;
+//	}
+//	i_da++;
+//
+//	if(i_da > 1600)
+//	{
+//		dataAccumulator[0] = dataAccumulator[0];
+//		while(1)
+//		{
+//			volatile int getStuck = 0;
+//			getStuck = getStuck;
+//		}
+//	}
 
 	/* --- End of data logging */
 

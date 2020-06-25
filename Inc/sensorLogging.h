@@ -10,9 +10,9 @@
 
 #include "main.h"
 
-void sensorLog(void* buffer, uint32_t size)
-{
 
-}
+void log_mpu6050(float ax, float ay, float az, float gx, float gy, float gz, float dt);
+
+
 
 #endif /* SENSORLOGGING_H_ */
