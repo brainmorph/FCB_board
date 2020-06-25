@@ -85,8 +85,8 @@ void CalculatePitchRollYaw(void)
 	/* --- Log data */
 	volatile static uint32_t i_da = 0;
 	volatile static uint32_t j_da = 0;
-	volatile static SensorLogPacket dataAccumulator[100];
-	if(i_da < 500 && i_da >= 400)
+	volatile static SensorLogPacket dataAccumulator[1200];
+	if(i_da < 1600 && i_da >= 400)
 	{
 		dataAccumulator[j_da].ax = accelX;
 		dataAccumulator[j_da].ay = accelY;
@@ -102,7 +102,7 @@ void CalculatePitchRollYaw(void)
 	}
 	i_da++;
 
-	if(i_da > 500)
+	if(i_da > 1600)
 	{
 		dataAccumulator[0] = dataAccumulator[0];
 		while(1)
@@ -131,7 +131,7 @@ void CalculatePitchRollYaw(void)
 	yawAngle += gyroYawDelta;
 
 	//If the IMU has yaw-ed transfer the roll angle to the pitch angle
-	pitchAngle += rollAngle * sin(gyroYawDelta * (3.14/180.0));
+	pitchAngle -= rollAngle * sin(gyroYawDelta * (3.14/180.0));
 	//If the IMU has yaw-ed transfer the pitch angle to the roll angle
 	rollAngle += pitchAngle * sin(gyroYawDelta * (3.14/180.0));
 
