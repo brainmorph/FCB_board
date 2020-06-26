@@ -83,6 +83,7 @@ void CalculatePitchRollYaw(void)
 	gyroZ -= envGyroZ;
 
 	/* --- Log data */
+	//HAL_Delay(5);
 	log_mpu6050(accelX, accelY, accelZ, gyroX, gyroY, gyroZ, deltaT);
 
 //	volatile static uint32_t i_da = 0;
