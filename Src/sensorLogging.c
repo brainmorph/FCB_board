@@ -42,6 +42,15 @@ void log_mpu6050(float ax, float ay, float az, float gx, float gy, float gz, flo
 	uint8_t uartBuf[uartBufLength];
 	memcpy(uartBuf, &mpuData, uartBufLength);
 
+	/* Leave the first 3 bytes as ampersands and then modify the rest of the bytes */
+	memcpy(&uartBuf[3], &mpuData.ax, 4);
+	memcpy(&uartBuf[7], &mpuData.ay, 4);
+	memcpy(&uartBuf[11], &mpuData.az, 4);
+	memcpy(&uartBuf[15], &mpuData.gx, 4);
+	memcpy(&uartBuf[19], &mpuData.gy, 4);
+	memcpy(&uartBuf[23], &mpuData.gz, 4);
+	memcpy(&uartBuf[27], &mpuData.dt, 4);
+
 	HAL_UART_Transmit(&huart6, uartBuf,
 			uartBufLength, 10); // 10 ms timeout
 }
