@@ -83,7 +83,7 @@ void CalculatePitchRollYaw(void)
 	gyroZ -= envGyroZ;
 
 	/* --- Log data */
-	HAL_Delay(20);
+	//HAL_Delay(20);
 	log_mpu6050(accelX, accelY, accelZ, gyroX, gyroY, gyroZ, deltaT);
 
 //	volatile static uint32_t i_da = 0;
@@ -133,10 +133,13 @@ void CalculatePitchRollYaw(void)
 	pitchAngle += gyroPitchDelta;
 	yawAngle += gyroYawDelta;
 
+	static float lpfYawDelta = 0.0;
+	lpfYawDelta = 0.3 * gyroYawDelta + (1 - 0.3) * lpfYawDelta;
+
 	//If the IMU has yaw-ed transfer the roll angle to the pitch angle
-	pitchAngle -= rollAngle * sin(gyroYawDelta * (3.14/180.0));
+	pitchAngle += rollAngle * sin(lpfYawDelta * (3.14/180.0));
 	//If the IMU has yaw-ed transfer the pitch angle to the roll angle
-	rollAngle += pitchAngle * sin(gyroYawDelta * (3.14/180.0));
+	rollAngle -= pitchAngle * sin(lpfYawDelta * (3.14/180.0));
 
 
 	// average out acceleration but not gyro
