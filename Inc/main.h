@@ -59,12 +59,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define BME280_STATUS_LED_Pin GPIO_PIN_15
-#define BME280_STATUS_LED_GPIO_Port GPIOB
 #define SPI1_CE_Pin GPIO_PIN_6
 #define SPI1_CE_GPIO_Port GPIOB
 #define SPI1_CS_Pin GPIO_PIN_7
 #define SPI1_CS_GPIO_Port GPIOB
+#define BME280_STATUS_LED_Pin GPIO_PIN_1
+#define BME280_STATUS_LED_GPIO_Port GPIOE
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

@@ -138,8 +138,9 @@ void FC_Flight_Loop(void)
 //		telemetryData.motorPwmBR = ??; // Back right
 
 
+		/* Transmit RF every Nth loop cycle */
 		fcLoopCount++;
-		if(fcLoopCount % 10 == 0) // only transmit RF messages every Nth loop cycle
+		if(fcLoopCount % 10 == 0)
 		{
 			if(FC_Transmit_32B(&telemetryData)) // transmit data without waiting for ACK
 			{
@@ -197,6 +198,43 @@ void FC_Flight_Loop(void)
 		} // if(NRF24_available())
 
 		//HAL_Delay(2);
+
+
+
+		/* Calculate PID error terms */
+		static float errorRoll, errorPitch, errorYaw;
+		static float rollSet = 0.0;
+		static float pitchSet = 0.0;
+		static float yawSet = 0.0;
+		errorRoll = rollSet - telemetryData.roll;
+		errorPitch = pitchSet - telemetryData.pitch;
+		errorYaw = yawSet - telemetryData.yaw;
+
+		/* Calculate and lpf derivative */
+		static float lpfErrorRoll, lpfErrorPitch;
+		lpfErrorRoll = lpfErrorRoll + 0.1 * (errorRoll - lpfErrorRoll);
+		lpfErrorPitch = lpfErrorPitch + 0.1 * (errorPitch - lpfErrorPitch);
+
+		static float lpfErrorRollOLD, lpfErrorPitchOLD, oldErrorYaw;
+		static float rollCmd, pitchCmd, yawCmd;
+		float derivativeRoll = (lpfErrorRoll - lpfErrorRollOLD) / telemetryData.deltaT; // take derivative of lpf signal
+		float derivativePitch = (lpfErrorPitch - lpfErrorPitchOLD) / telemetryData.deltaT; // take derivative of lpf signal
+		float derivativeYaw = (errorYaw - oldErrorYaw) / telemetryData.deltaT;
+
+		lpfErrorRollOLD = lpfErrorRoll; // done using lpfErrorRollOLD so time to update it
+		lpfErrorPitchOLD = lpfErrorPitch; // done using lpfErrorPitchOLD so time to update it
+
+		static float kp = 0.0;
+		static float kd = 0.0;
+		rollCmd = kp * errorRoll + kd * derivativeRoll;
+		pitchCmd = kp * errorPitch + kd * derivativePitch;
+		yawCmd = kp * errorYaw + kd * derivativeYaw;
+
+		rollCmd = rollCmd;		// delete
+		pitchCmd = pitchCmd;	// delete
+		yawCmd = yawCmd;		// delete
+
+
 #endif // FLIGHT_PLATFORM
 
 

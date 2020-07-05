@@ -71,60 +71,29 @@ static uint32_t PRY_Timer = 0;
 static float deltaT = 0.0f;
 void CalculatePitchRollYaw(void)
 {
-	ReadMPU0650(); // get most recent sensor data
+	/* Gather latest IMU data */
+	ReadMPU0650();
 
+	/* Get deltaT  since last calculation */
 	deltaT = Elapsed_Ms_Since_Timer_Start(&PRY_Timer);
 	Ms_Timer_Start(&PRY_Timer); // restart timer
 	deltaT /= 1000; // convert to seconds
 
-	// subtract out initial gyro values
+	/* Subtract out initial gyro values (calibrate) */
 	gyroX -= envGyroX;
 	gyroY -= envGyroY;
 	gyroZ -= envGyroZ;
 
-	/* --- Log data */
+	/* Log data  */
 	//HAL_Delay(20);
 	log_mpu6050(accelX, accelY, accelZ, gyroX, gyroY, gyroZ, deltaT);
-
-//	volatile static uint32_t i_da = 0;
-//	volatile static uint32_t j_da = 0;
-//	volatile static SensorLogPacket dataAccumulator[1200];
-//	if(i_da < 1600 && i_da >= 400)
-//	{
-//		dataAccumulator[j_da].ax = accelX;
-//		dataAccumulator[j_da].ay = accelY;
-//		dataAccumulator[j_da].az = accelZ;
-//
-//		dataAccumulator[j_da].gx = gyroX;
-//		dataAccumulator[j_da].gy = gyroY;
-//		dataAccumulator[j_da].gz = gyroZ;
-//
-//		dataAccumulator[j_da].dt = deltaT;
-//
-//		j_da++;
-//	}
-//	i_da++;
-//
-//	if(i_da > 1600)
-//	{
-//		dataAccumulator[0] = dataAccumulator[0];
-//		while(1)
-//		{
-//			volatile int getStuck = 0;
-//			getStuck = getStuck;
-//		}
-//	}
-
-	/* --- End of data logging */
-
-
 
 
 //	if(PRY_Count < 10)
 //		deltaT = 0.01;
 
-	// x axis of gyro points from left to right (as you look from behind quad)
-	// y axis of gyro points straight forward
+	// x axis of gyro points to the right (as you look from behind quad)
+	// y axis of gyro points straight forward (as you look from behind quad)
 	float gyroRollDelta = 1.0 * gyroY * deltaT;
 	float gyroPitchDelta = 1.0 * gyroZ * deltaT;
 	float gyroYawDelta = 1.0 * gyroZ * deltaT;
