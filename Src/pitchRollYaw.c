@@ -84,6 +84,9 @@ void CalculatePitchRollYaw(void)
 	gyroY -= envGyroY;
 	gyroZ -= envGyroZ;
 
+	/* TODO: normalize environment accel values to magnitude 1g??
+	   This might actually not be necessary... */
+
 	/* Log data  */
 	//HAL_Delay(20);
 	log_mpu6050(accelX, accelY, accelZ, gyroX, gyroY, gyroZ, deltaT);
@@ -92,48 +95,46 @@ void CalculatePitchRollYaw(void)
 //	if(PRY_Count < 10)
 //		deltaT = 0.01;
 
+	/* Calculate motion deltas */
 	// x axis of gyro points to the right (as you look from behind quad)
 	// y axis of gyro points straight forward (as you look from behind quad)
-	float gyroRollDelta = 1.0 * gyroY * deltaT;
-	float gyroPitchDelta = 1.0 * gyroZ * deltaT;
-	float gyroYawDelta = 1.0 * gyroZ * deltaT;
+	float gyroRollDelta = gyroY * deltaT;
+	float gyroPitchDelta = gyroX * deltaT;
+	float gyroYawDelta = gyroZ * deltaT;
 
+	/* Update to new angle */
 	rollAngle += gyroRollDelta;
 	pitchAngle += gyroPitchDelta;
 	yawAngle += gyroYawDelta;
 
-	static float lpfYawDelta = 0.0;
-	lpfYawDelta = 0.3 * gyroYawDelta + (1 - 0.3) * lpfYawDelta;
 
-	//If the IMU has yaw-ed transfer the roll angle to the pitch angle
-	pitchAngle += rollAngle * sin(lpfYawDelta * (3.14/180.0));
-	//If the IMU has yaw-ed transfer the pitch angle to the roll angle
-	rollAngle -= pitchAngle * sin(lpfYawDelta * (3.14/180.0));
+	/* Low pass filter acceleration */
+	static float lpfAx = 0.0, lpfAy = 0.0, lpfAz = 0.0;
+	lpfAx = 0.2 * accelX + (1 - 0.2) * lpfAx;
+	lpfAy = 0.2 * accelY + (1 - 0.2) * lpfAy;
+	lpfAz = 0.2 * accelZ + (1 - 0.2) * lpfAz;
 
-
-	// average out acceleration but not gyro
-	lpfAx = 0.5 * accelX + 0.5 * lpfAx;
-	lpfAy = 0.5 * accelY + 0.5 * lpfAy;
-	lpfAz = 0.5 * accelZ + 0.5 * lpfAz;
-
-	// calculate roll angle from acceleration
-//	float accelRollAngle = atan2f(lpfAy, lpfAz); // sign flip to align with accelerometer orientation
-//	accelRollAngle *= (180.0 / 3.1415); // convert to degrees
-//
-//	//calculate pitch angle from acceleration
-//	float accelPitchAngle = atan2f(-1.0*lpfAx, lpfAz);
-//	accelPitchAngle *= (180.0 / 3.1415); // convert to degrees
-
-	float accelRollAngle = atan2f(lpfAx, lpfAz);
-	accelRollAngle *= (180.0 / 3.1415);
+	/* Calculate roll and pitch from acceleration only */
+	float accelRollAngle = atan2f(-lpfAx, lpfAz);
+	accelRollAngle *= (180.0 / 3.1415); // convert to degrees
 
 	float accelPitchAngle = atan2f(lpfAy, lpfAz);
-	accelPitchAngle *= (180.0 / 3.1415);
+	accelPitchAngle *= (180.0 / 3.1415); // convert to degrees
 
 
-	// complementary filter to correct drift error over time
-	rollAngle = 1.0 * rollAngle + 0.0 * accelRollAngle;
-	pitchAngle = 1.0 * pitchAngle + 0.0 * accelPitchAngle;
+	/* Complementary filter gyro calculations with acceleration calculations */
+	float alpha = 0.995;
+	pitchAngle = alpha * pitchAngle + (1-alpha) * accelPitchAngle;
+	rollAngle = alpha * rollAngle + (1-alpha) * accelRollAngle;
+
+
+	/* Transfer roll to pitch if quad is yaw-ing */
+	static float lpfYawDelta = 0.0;
+	lpfYawDelta = 0.3 * gyroYawDelta + (1 - 0.3) * lpfYawDelta;
+	pitchAngle += rollAngle * sin(lpfYawDelta * (3.1415 / 180.0));
+	rollAngle -= pitchAngle * sin(lpfYawDelta * (3.1415 / 180.0));
+
+
 
 	PRY_Count++;
 }

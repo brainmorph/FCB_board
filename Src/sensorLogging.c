@@ -26,7 +26,8 @@ typedef struct
 
 static mpu6050_t mpuData = {0xAA, 0xAA, 0xAA, '#', 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0};  // load up the first 3 members with packet key identifier
 
-void log_mpu6050(float ax, float ay, float az, float gx, float gy, float gz, float dt)
+void log_mpu6050(float ax, float ay, float az,
+		float gx, float gy, float gz, float dt)
 {
 	/* Reordering of bytes might be necessary in the future */
 	mpuData.ax = ax;
