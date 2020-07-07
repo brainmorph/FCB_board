@@ -16,10 +16,10 @@ void mixPWM(float thrust, float roll, float pitch, float yaw)
 	//roll *= 1.0;
 	yaw /= 8.0; // yaw needs to be cut back heavily
 
-	float FR = thrust - yaw - pitch - roll;
-	float FL = thrust + yaw - pitch + roll;
-	float BR = thrust + yaw + pitch - roll;
-	float BL = thrust - yaw + pitch + roll;
+	float FR = thrust + yaw + pitch - roll;
+	float FL = thrust - yaw + pitch + roll;
+	float BR = thrust - yaw - pitch - roll;
+	float BL = thrust + yaw - pitch + roll;
 
 	setPWM(FL, FR, BR, BL);
 }

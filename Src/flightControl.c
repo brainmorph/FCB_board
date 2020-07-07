@@ -220,13 +220,13 @@ void FC_Flight_Loop(void)
 		static float rollSet = 0.0;
 		static float pitchSet = 0.0;
 		static float yawSet = 0.0;
-		errorRoll = rollSet - telemetryData.roll;
-		errorPitch = pitchSet - telemetryData.pitch;
-		errorYaw = yawSet - telemetryData.yaw;
+		errorRoll = rollSet - telemetryData.roll;		// error roll is negative if quad will have to roll in negative direction
+		errorPitch = pitchSet - telemetryData.pitch;	// error pitch is negative if quad will have to pitch in negative direction
+		errorYaw = yawSet - telemetryData.yaw;			// error yaw is negative if quad will have to yaw in negative direction
 
 
 		/* LPF the error terms */
-		static float lpfErrorRoll, lpfErrorPitch, lpfErrorRollOLD = 0.0, lpfErrorPitchOLD = 0.0;
+		static float lpfErrorRoll=0.0, lpfErrorPitch=0.0, lpfErrorRollOLD = 0.0, lpfErrorPitchOLD = 0.0;
 		lpfErrorRoll = 0.9 * lpfErrorRoll + (1 - 0.9) * errorRoll;
 		lpfErrorPitch = 0.9 * lpfErrorPitch + (1 - 0.9) * errorPitch;
 
@@ -244,9 +244,9 @@ void FC_Flight_Loop(void)
 		static float kd = 0.02;
 
 		volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
-		rollCmd = kp * errorRoll + kd * derivativeRoll;
-		pitchCmd = kp * errorPitch + kd * derivativePitch;
-		yawCmd = kp * errorYaw; // WAS:  "+ kd * derivativeYaw"
+		rollCmd = kp * errorRoll + kd * derivativeRoll; // negative roll command means roll in negative direction
+		pitchCmd = kp * errorPitch + kd * derivativePitch; // negative pitch command means pitch in negative direction
+		yawCmd = kp * errorYaw; // WAS:  "+ kd * derivativeYaw"	// negative yaw command means yaw in negative direction
 
 
 		yawCmd = 0.0;
