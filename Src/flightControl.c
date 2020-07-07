@@ -11,6 +11,7 @@
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
+#include "tim.h"
 
 #include "MY_NRF24.h"
 #include "bme280.h"
@@ -90,6 +91,12 @@ void FC_Init(void)
 
 	InitMPU();
 	CollectInitalSensorValues();
+
+
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
 }
 
 
@@ -233,15 +240,16 @@ void FC_Flight_Loop(void)
 
 
 
-		static float kp = 0.0;
-		static float kd = 0.0;
+		static float kp = 2.0;
+		static float kd = 0.02;
 
-		static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
+		volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
 		rollCmd = kp * errorRoll + kd * derivativeRoll;
 		pitchCmd = kp * errorPitch + kd * derivativePitch;
 		yawCmd = kp * errorYaw; // WAS:  "+ kd * derivativeYaw"
 
 
+		yawCmd = 0.0;
 		mixPWM(0.0, rollCmd, pitchCmd, yawCmd);
 
 

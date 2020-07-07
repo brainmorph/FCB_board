@@ -29,7 +29,7 @@ float motor1Setting=0, motor2Setting=0, motor3Setting=0, motor4Setting=0;
 void setPWM(float motor1, float motor2, float motor3, float motor4)
 {
 
-	// clip min/max motor output
+	/* Clip min motor output */
 	if(motor1 < 5)
 		motor1 = 0;
 	if(motor2 < 5)
@@ -39,6 +39,7 @@ void setPWM(float motor1, float motor2, float motor3, float motor4)
 	if(motor4 < 5)
 		motor4 = 0;
 
+	/* Clip max motor output */
 	float motorMax = 60;
 	if(motor1 > motorMax)
 		motor1 = motorMax;
@@ -49,24 +50,24 @@ void setPWM(float motor1, float motor2, float motor3, float motor4)
 	if(motor4 > motorMax)
 		motor4 = motorMax;
 
-	// transition speed one step at a time
-	if(motor1 > motor1Setting)
-		motor1Setting += 1;
-	if(motor2 > motor2Setting)
-		motor2Setting += 1;
-	if(motor3 > motor3Setting)
-		motor3Setting += 1;
-	if(motor4 > motor4Setting)
-		motor4Setting += 1;
-
-	if(motor1 < motor1Setting)
-		motor1Setting -= 1;
-	if(motor2 < motor2Setting)
-		motor2Setting -= 1;
-	if(motor3 < motor3Setting)
-		motor3Setting -= 1;
-	if(motor4 < motor4Setting)
-		motor4Setting -= 1;
+//	// transition speed one step at a time
+//	if(motor1 > motor1Setting)
+//		motor1Setting += 1;
+//	if(motor2 > motor2Setting)
+//		motor2Setting += 1;
+//	if(motor3 > motor3Setting)
+//		motor3Setting += 1;
+//	if(motor4 > motor4Setting)
+//		motor4Setting += 1;
+//
+//	if(motor1 < motor1Setting)
+//		motor1Setting -= 1;
+//	if(motor2 < motor2Setting)
+//		motor2Setting -= 1;
+//	if(motor3 < motor3Setting)
+//		motor3Setting -= 1;
+//	if(motor4 < motor4Setting)
+//		motor4Setting -= 1;
 
 
 	// TODO: update min and max values to match new timer settings (I want higher resolution control)
@@ -80,22 +81,22 @@ void setPWM(float motor1, float motor2, float motor3, float motor4)
 	int range = max - min;
 
 	// motor 1
-	int setting = (motor1/100.0) * (float)range;
+	int setting = (motor1/100.0) * (float)range; // take a percentage out of max allowable range
 	setting += min; // add new value to minimum setting
 	htim2.Instance->CCR1 = setting;
 
 	// motor 2
-	setting = (motor2/100.0) * (float)range;
+	setting = (motor2/100.0) * (float)range; // take a percentage out of max allowable range
 	setting += min;
 	htim2.Instance->CCR2 = setting;
 
 	// motor 3
-	setting = (motor3/100.0) * (float)range;
+	setting = (motor3/100.0) * (float)range; // take a percentage out of max allowable range
 	setting += min;
 	htim2.Instance->CCR3 = setting;
 
 	// motor 4
-	setting = (motor4/100.0) * (float)range;
+	setting = (motor4/100.0) * (float)range; // take a percentage out of max allowable range
 	setting += min;
 	htim2.Instance->CCR4 = setting;
 
