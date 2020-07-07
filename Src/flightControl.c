@@ -20,6 +20,7 @@
 #include "timer.h"
 #include "pitchRollYaw.h"
 #include "mpu6050.h"
+#include "motorControl.h"
 
 /* Private Variables */
 static uint32_t MainFlightLoopTimer = 0;
@@ -240,9 +241,8 @@ void FC_Flight_Loop(void)
 		pitchCmd = kp * errorPitch + kd * derivativePitch;
 		yawCmd = kp * errorYaw; // WAS:  "+ kd * derivativeYaw"
 
-		rollCmd = rollCmd;		// delete
-		pitchCmd = pitchCmd;	// delete
-		yawCmd = yawCmd;		// delete
+
+		mixPWM(0.0, rollCmd, pitchCmd, yawCmd);
 
 
 #endif // FLIGHT_PLATFORM
