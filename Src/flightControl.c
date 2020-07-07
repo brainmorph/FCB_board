@@ -201,6 +201,12 @@ void FC_Flight_Loop(void)
 
 
 
+
+
+		/* >>> BY THIS POINT ALL ORIENTATION ANGLES SHOULD BE FULLY COMPUTED <<< */
+
+
+
 		/* Calculate PID error terms */
 		static float errorRoll, errorPitch, errorYaw;
 		static float rollSet = 0.0;
@@ -210,25 +216,29 @@ void FC_Flight_Loop(void)
 		errorPitch = pitchSet - telemetryData.pitch;
 		errorYaw = yawSet - telemetryData.yaw;
 
-		/* Calculate and lpf derivative */
-		static float lpfErrorRoll, lpfErrorPitch;
-		lpfErrorRoll = lpfErrorRoll + 0.1 * (errorRoll - lpfErrorRoll);
-		lpfErrorPitch = lpfErrorPitch + 0.1 * (errorPitch - lpfErrorPitch);
 
-		static float lpfErrorRollOLD, lpfErrorPitchOLD, oldErrorYaw;
-		static float rollCmd, pitchCmd, yawCmd;
+		/* LPF the error terms */
+		static float lpfErrorRoll, lpfErrorPitch, lpfErrorRollOLD = 0.0, lpfErrorPitchOLD = 0.0;
+		lpfErrorRoll = 0.9 * lpfErrorRoll + (1 - 0.9) * errorRoll;
+		lpfErrorPitch = 0.9 * lpfErrorPitch + (1 - 0.9) * errorPitch;
+
+
+		/* Calculate derivative of error terms */
 		float derivativeRoll = (lpfErrorRoll - lpfErrorRollOLD) / telemetryData.deltaT; // take derivative of lpf signal
 		float derivativePitch = (lpfErrorPitch - lpfErrorPitchOLD) / telemetryData.deltaT; // take derivative of lpf signal
-		float derivativeYaw = (errorYaw - oldErrorYaw) / telemetryData.deltaT;
 
-		lpfErrorRollOLD = lpfErrorRoll; // done using lpfErrorRollOLD so time to update it
-		lpfErrorPitchOLD = lpfErrorPitch; // done using lpfErrorPitchOLD so time to update it
+		lpfErrorRollOLD = lpfErrorRoll; // update last measurement
+		lpfErrorPitchOLD = lpfErrorPitch; // update last measurement
+
+
 
 		static float kp = 0.0;
 		static float kd = 0.0;
+
+		static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
 		rollCmd = kp * errorRoll + kd * derivativeRoll;
 		pitchCmd = kp * errorPitch + kd * derivativePitch;
-		yawCmd = kp * errorYaw + kd * derivativeYaw;
+		yawCmd = kp * errorYaw; // WAS:  "+ kd * derivativeYaw"
 
 		rollCmd = rollCmd;		// delete
 		pitchCmd = pitchCmd;	// delete
@@ -303,7 +313,7 @@ void FC_Flight_Loop(void)
 		if(period < 1)
 			period = 1;
 		volatile float frequency = 1 / (period / 1000.0);
-		frequency++;
+		frequency = frequency;
     } // while(1)
 } // void BMFC_Flight_Loop(void)
 
