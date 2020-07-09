@@ -7,6 +7,13 @@
 
 #include "motorControl.h"
 #include "tim.h"
+#include "pitchRollyaw.h"
+#include "altitude.h"
+
+
+
+
+StateData_t stateData = {0, 0.0, 0.0, 0.0, 0.0};
 
 
 void mixPWM(float thrust, float roll, float pitch, float yaw)
@@ -104,5 +111,60 @@ void setPWM(float motor1, float motor2, float motor3, float motor4)
 //		snprintf(uartData, sizeof(uartData), "[%02.2f, %02.2f, %02.2f, %02.2f]   ",
 //				motor1, motor2, motor3, motor4);
 //		HAL_UART_Transmit(&huart4, uartData, 100, 5);
+}
+
+
+
+
+void GatherSensorData()
+{
+	/* Gather all relevant sensor data */
+	CalculatePitchRollYaw();
+
+	stateData.altitude = CurrentAltitude();
+	stateData.pitch = CurrentPitchAngle(); // from -180 to 180
+	stateData.roll = CurrentRollAngle(); // from -180 to 180
+	stateData.yaw = CurrentYawAngle(); // from -180 to 180
+	stateData.deltaT = LastDeltaT();
+}
+
+void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet)
+{
+	GatherSensorData();
+
+
+	/* Calculate PID error terms */
+	static float errorRoll, errorPitch, errorYaw;
+	errorRoll = rollSet - stateData.roll;		// error roll is negative if quad will have to roll in negative direction
+	errorPitch = pitchSet - stateData.pitch;	// error pitch is negative if quad will have to pitch in negative direction
+	errorYaw = yawSet - stateData.yaw;			// error yaw is negative if quad will have to yaw in negative direction
+
+
+	/* LPF the error terms */
+	static float lpfErrorRoll=0.0, lpfErrorPitch=0.0, lpfErrorRollOLD = 0.0, lpfErrorPitchOLD = 0.0;
+	lpfErrorRoll = 0.9 * lpfErrorRoll + (1 - 0.9) * errorRoll;
+	lpfErrorPitch = 0.9 * lpfErrorPitch + (1 - 0.9) * errorPitch;
+
+
+	/* Calculate derivative of error terms */
+	float derivativeRoll = (lpfErrorRoll - lpfErrorRollOLD) / stateData.deltaT; // take derivative of lpf signal
+	float derivativePitch = (lpfErrorPitch - lpfErrorPitchOLD) / stateData.deltaT; // take derivative of lpf signal
+
+	lpfErrorRollOLD = lpfErrorRoll; // update last measurement
+	lpfErrorPitchOLD = lpfErrorPitch; // update last measurement
+
+
+
+	static float kp = 2.0;
+	static float kd = 0.02;
+
+	volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
+	rollCmd = kp * errorRoll + kd * derivativeRoll; // negative roll command means roll in negative direction
+	pitchCmd = kp * errorPitch + kd * derivativePitch; // negative pitch command means pitch in negative direction
+	yawCmd = kp * errorYaw; // WAS:  "+ kd * derivativeYaw"	// negative yaw command means yaw in negative direction
+
+
+	yawCmd = 0.0; // TURN OFF YAW TEMPORARILY
+	mixPWM(throttleSet, rollCmd, pitchCmd, yawCmd);
 }
 

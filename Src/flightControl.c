@@ -26,7 +26,7 @@
 /* Private Variables */
 static uint32_t MainFlightLoopTimer = 0;
 
-typedef struct RadioPacket_t
+typedef struct RadioPacket_t // this packet MUST BE 32 bytes in size
 {
 	uint32_t count; // 4 bytes
 	float altitude; // 4 bytes
@@ -43,7 +43,26 @@ typedef struct RadioPacket_t
 }RadioPacket_t; // this packet MUST BE 32 bytes in size
 
 RadioPacket_t telemetryData = {0, 0.0, 0.0, 0.0, 0.0};
-RadioPacket_t groundData = {0, 0.0f};
+
+
+typedef struct CommandPacket_t // this packet MUST BE 32 bytes in size
+{
+	uint32_t count;		// 4 bytes
+
+	float throttleSet;  // 4 bytes
+	float rollSet;		// 4 bytes
+	float pitchSet;		// 4 bytes
+	float yawSet;		// 4 bytes
+
+	uint32_t garbage1;	// 4 bytes
+	uint32_t garbage2; 	// 4 bytes
+	uint32_t garbage3;  // 4 bytes
+
+}CommandPacket_t; // this packet MUST BE 32 bytes in size
+
+CommandPacket_t commandData = {0, 0.0, 0.0, 0.0, 0.0};
+
+
 
 typedef struct
 {
@@ -117,6 +136,7 @@ void Check_Error_Status() {
 }
 
 
+extern StateData_t stateData;
 
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
@@ -130,21 +150,13 @@ void FC_Flight_Loop(void)
 #ifdef FLIGHT_PLATFORM
 		Check_Error_Status(); // toggle LED based on any error detection
 
-		/* Gather all relevant sensor data */
-		CalculatePitchRollYaw();
 
-		telemetryData.altitude = CurrentAltitude();
-		telemetryData.pitch = CurrentPitchAngle(); // from -180 to 180
-		telemetryData.roll = CurrentRollAngle(); // from -180 to 180
-		telemetryData.yaw = CurrentYawAngle(); // from -180 to 180
-		telemetryData.deltaT = LastDeltaT();
-//		telemetryData.longitude = currentLongitude();
-//		telemetryData.latitude = currentLatitude();
-//		telemetryData.motorPmwFL = ??; // Front Left
-//		telemetryData.motorPwmFR = ??; // Front Right
-//		telemetryData.motorPwmBL = ??; // Back Left
-//		telemetryData.motorPwmBR = ??; // Back right
 
+		telemetryData.altitude = stateData.altitude;
+		telemetryData.pitch = stateData.pitch;
+		telemetryData.roll = stateData.roll;
+		telemetryData.yaw = stateData.yaw;
+		telemetryData.deltaT = stateData.deltaT;
 
 		/* Transmit RF every Nth loop cycle */
 		fcLoopCount++;
@@ -172,6 +184,11 @@ void FC_Flight_Loop(void)
 		//HAL_Delay(2);
 
 
+		static volatile uint32_t receivedCount;
+		volatile float receivedThrottle;
+		volatile float receivedRoll;
+		volatile float receivedPitch;
+		volatile float receivedYaw;
 		if(NRF24_available())
 		{
 #ifdef UART_DEBUG
@@ -179,13 +196,23 @@ void FC_Flight_Loop(void)
 				strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
 #endif // UART_DEBUG
 
-			NRF24_read(&groundData, sizeof(groundData)); // remember that NRF radio can at most transmit 32 bytes
+			NRF24_read(&commandData, sizeof(commandData)); // remember that NRF radio can at most transmit 32 bytes
 
-			//receivedAltitude = *(float *)myRxData; // handle myRxData as a 4 byte float and read the value from it
-			volatile float receivedAltitude = groundData.altitude;
+			receivedCount = commandData.count;
+			receivedThrottle = commandData.throttleSet;
+			receivedRoll = commandData.rollSet;
+			receivedPitch = commandData.pitchSet;
+			receivedYaw = commandData.yawSet;
 
-			altimeter.preDecimal = (int) receivedAltitude;
-			altimeter.postDecimal = (int)((receivedAltitude - altimeter.preDecimal) * 100);
+			/* Check for dropped packets */
+			static uint32_t oldCount = 0;
+			static uint32_t droppedPacket = 0;
+			if(++oldCount != receivedCount)
+			{
+				droppedPacket++;
+				oldCount = receivedCount;
+			}
+
 
 #ifdef UART_DEBUG
 			snprintf(myRxData, 32, "Gnd packets %lu \r\n", groundData.count);
@@ -214,43 +241,8 @@ void FC_Flight_Loop(void)
 		/* >>> BY THIS POINT ALL ORIENTATION ANGLES SHOULD BE FULLY COMPUTED <<< */
 
 
+		CalculatePID(receivedThrottle, receivedRoll, receivedPitch, receivedYaw);
 
-		/* Calculate PID error terms */
-		static float errorRoll, errorPitch, errorYaw;
-		static float rollSet = 0.0;
-		static float pitchSet = 0.0;
-		static float yawSet = 0.0;
-		errorRoll = rollSet - telemetryData.roll;		// error roll is negative if quad will have to roll in negative direction
-		errorPitch = pitchSet - telemetryData.pitch;	// error pitch is negative if quad will have to pitch in negative direction
-		errorYaw = yawSet - telemetryData.yaw;			// error yaw is negative if quad will have to yaw in negative direction
-
-
-		/* LPF the error terms */
-		static float lpfErrorRoll=0.0, lpfErrorPitch=0.0, lpfErrorRollOLD = 0.0, lpfErrorPitchOLD = 0.0;
-		lpfErrorRoll = 0.9 * lpfErrorRoll + (1 - 0.9) * errorRoll;
-		lpfErrorPitch = 0.9 * lpfErrorPitch + (1 - 0.9) * errorPitch;
-
-
-		/* Calculate derivative of error terms */
-		float derivativeRoll = (lpfErrorRoll - lpfErrorRollOLD) / telemetryData.deltaT; // take derivative of lpf signal
-		float derivativePitch = (lpfErrorPitch - lpfErrorPitchOLD) / telemetryData.deltaT; // take derivative of lpf signal
-
-		lpfErrorRollOLD = lpfErrorRoll; // update last measurement
-		lpfErrorPitchOLD = lpfErrorPitch; // update last measurement
-
-
-
-		static float kp = 2.0;
-		static float kd = 0.02;
-
-		volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
-		rollCmd = kp * errorRoll + kd * derivativeRoll; // negative roll command means roll in negative direction
-		pitchCmd = kp * errorPitch + kd * derivativePitch; // negative pitch command means pitch in negative direction
-		yawCmd = kp * errorYaw; // WAS:  "+ kd * derivativeYaw"	// negative yaw command means yaw in negative direction
-
-
-		yawCmd = 0.0;
-		mixPWM(0.0, rollCmd, pitchCmd, yawCmd);
 
 
 #endif // FLIGHT_PLATFORM

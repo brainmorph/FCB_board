@@ -8,8 +8,23 @@
 #ifndef MOTORCONTROL_H_
 #define MOTORCONTROL_H_
 
+typedef struct StateData_t
+{
+	float altitude; // 4 bytes
+
+	float pitch; 	// 4 bytes
+	float roll; 	// 4 bytes
+	float yaw; 		// 4 bytes
+
+	float deltaT;	// 4 bytes
+
+}StateData_t; // this packet MUST BE 32 bytes in size
+
+
 void mixPWM(float thrust, float roll, float pitch, float yaw);
 void setPWM(float motor1, float motor2, float motor3, float motor4);
+
+void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet);
 
 
 #endif /* MOTORCONTROL_H_ */
