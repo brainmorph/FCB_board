@@ -16,16 +16,16 @@ void mixPWM(float thrust, float roll, float pitch, float yaw)
 	//roll *= 1.0;
 	yaw /= 8.0; // yaw needs to be cut back heavily
 
-	float FR = thrust + yaw + pitch - roll;
-	float FL = thrust - yaw + pitch + roll;
-	float BR = thrust - yaw - pitch - roll;
-	float BL = thrust + yaw - pitch + roll;
+	float FR = thrust - yaw + pitch - roll;
+	float FL = thrust + yaw + pitch + roll;
+	float BR = thrust + yaw - pitch - roll;
+	float BL = thrust - yaw - pitch + roll;
 
 	setPWM(FL, FR, BR, BL);
 }
 
 // each setting represents motor throttle from 0 to 100%
-float motor1Setting=0, motor2Setting=0, motor3Setting=0, motor4Setting=0;
+float motor1Setting=0.0, motor2Setting=0.0, motor3Setting=0.0, motor4Setting=0.0;
 void setPWM(float motor1, float motor2, float motor3, float motor4)
 {
 
@@ -50,24 +50,24 @@ void setPWM(float motor1, float motor2, float motor3, float motor4)
 	if(motor4 > motorMax)
 		motor4 = motorMax;
 
-//	// transition speed one step at a time
-//	if(motor1 > motor1Setting)
-//		motor1Setting += 1;
-//	if(motor2 > motor2Setting)
-//		motor2Setting += 1;
-//	if(motor3 > motor3Setting)
-//		motor3Setting += 1;
-//	if(motor4 > motor4Setting)
-//		motor4Setting += 1;
-//
-//	if(motor1 < motor1Setting)
-//		motor1Setting -= 1;
-//	if(motor2 < motor2Setting)
-//		motor2Setting -= 1;
-//	if(motor3 < motor3Setting)
-//		motor3Setting -= 1;
-//	if(motor4 < motor4Setting)
-//		motor4Setting -= 1;
+	// transition speed one step at a time
+	if(motor1 > motor1Setting)
+		motor1Setting += 1;
+	if(motor2 > motor2Setting)
+		motor2Setting += 1;
+	if(motor3 > motor3Setting)
+		motor3Setting += 1;
+	if(motor4 > motor4Setting)
+		motor4Setting += 1;
+
+	if(motor1 < motor1Setting)
+		motor1Setting -= 1;
+	if(motor2 < motor2Setting)
+		motor2Setting -= 1;
+	if(motor3 < motor3Setting)
+		motor3Setting -= 1;
+	if(motor4 < motor4Setting)
+		motor4Setting -= 1;
 
 
 	// TODO: update min and max values to match new timer settings (I want higher resolution control)
