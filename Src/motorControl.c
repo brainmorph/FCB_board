@@ -81,22 +81,22 @@ void setPWM(float motor1, float motor2, float motor3, float motor4)
 	int range = max - min;
 
 	// motor 1
-	int setting = (motor1/100.0) * (float)range; // take a percentage out of max allowable range
+	int setting = (motor1Setting/100.0) * (float)range; // take a percentage out of max allowable range
 	setting += min; // add new value to minimum setting
 	htim2.Instance->CCR1 = setting;
 
 	// motor 2
-	setting = (motor2/100.0) * (float)range; // take a percentage out of max allowable range
+	setting = (motor2Setting/100.0) * (float)range; // take a percentage out of max allowable range
 	setting += min;
 	htim2.Instance->CCR2 = setting;
 
 	// motor 3
-	setting = (motor3/100.0) * (float)range; // take a percentage out of max allowable range
+	setting = (motor3Setting/100.0) * (float)range; // take a percentage out of max allowable range
 	setting += min;
 	htim2.Instance->CCR3 = setting;
 
 	// motor 4
-	setting = (motor4/100.0) * (float)range; // take a percentage out of max allowable range
+	setting = (motor4Setting/100.0) * (float)range; // take a percentage out of max allowable range
 	setting += min;
 	htim2.Instance->CCR4 = setting;
 
