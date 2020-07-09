@@ -151,17 +151,18 @@ void FC_Flight_Loop(void)
 		Check_Error_Status(); // toggle LED based on any error detection
 
 
-
-		telemetryData.altitude = stateData.altitude;
-		telemetryData.pitch = stateData.pitch;
-		telemetryData.roll = stateData.roll;
-		telemetryData.yaw = stateData.yaw;
-		telemetryData.deltaT = stateData.deltaT;
-
 		/* Transmit RF every Nth loop cycle */
 		fcLoopCount++;
 		if(fcLoopCount % 10 == 0)
 		{
+			/* Load up the data to send */
+			telemetryData.altitude = stateData.altitude;
+			telemetryData.pitch = stateData.pitch;
+			telemetryData.roll = stateData.roll;
+			telemetryData.yaw = stateData.yaw;
+			telemetryData.deltaT = stateData.deltaT;
+
+			/* Send data */
 			if(FC_Transmit_32B(&telemetryData)) // transmit data without waiting for ACK
 			{
 #ifdef UART_DEBUG
@@ -184,11 +185,11 @@ void FC_Flight_Loop(void)
 		//HAL_Delay(2);
 
 
-		static volatile uint32_t receivedCount;
-		volatile float receivedThrottle;
-		volatile float receivedRoll;
-		volatile float receivedPitch;
-		volatile float receivedYaw;
+		static volatile uint32_t receivedCount = 0;
+		static volatile float receivedThrottle = 0.0;
+		static volatile float receivedRoll = 0.0;
+		static volatile float receivedPitch = 0.0;
+		static volatile float receivedYaw = 0.0;
 		if(NRF24_available())
 		{
 #ifdef UART_DEBUG
@@ -199,10 +200,20 @@ void FC_Flight_Loop(void)
 			NRF24_read(&commandData, sizeof(commandData)); // remember that NRF radio can at most transmit 32 bytes
 
 			receivedCount = commandData.count;
-			receivedThrottle = commandData.throttleSet;
-			receivedRoll = commandData.rollSet;
-			receivedPitch = commandData.pitchSet;
-			receivedYaw = commandData.yawSet;
+
+
+			/* Constrain allowable throttle settings */
+			if((commandData.throttleSet >= 0.0) && (commandData.throttleSet < 100.0))
+				receivedThrottle = commandData.throttleSet;
+
+			/* Constrain allowable angle settings */
+			float cappedAngle = 40.0; // only allow angle settings between -40 < x < 40
+			if((commandData.rollSet >= -cappedAngle) && (commandData.rollSet < cappedAngle))
+				receivedRoll = commandData.rollSet;
+			if((commandData.pitchSet >= -cappedAngle) && (commandData.pitchSet < cappedAngle))
+				receivedPitch = commandData.pitchSet;
+			if((commandData.yawSet >= -cappedAngle) && (commandData.yawSet < cappedAngle))
+				receivedYaw = commandData.yawSet;
 
 			/* Check for dropped packets */
 			static uint32_t oldCount = 0;
@@ -239,7 +250,6 @@ void FC_Flight_Loop(void)
 
 
 		/* >>> BY THIS POINT ALL ORIENTATION ANGLES SHOULD BE FULLY COMPUTED <<< */
-
 
 		CalculatePID(receivedThrottle, receivedRoll, receivedPitch, receivedYaw);
 
