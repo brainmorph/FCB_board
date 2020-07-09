@@ -141,8 +141,8 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-#define FLIGHT_PLATFORM
-//#define GROUND_STATION
+//#define FLIGHT_PLATFORM
+#define GROUND_STATION
 	while(1)
     {
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
@@ -246,9 +246,6 @@ void FC_Flight_Loop(void)
 		//HAL_Delay(2);
 
 
-
-
-
 		/* >>> BY THIS POINT ALL ORIENTATION ANGLES SHOULD BE FULLY COMPUTED <<< */
 
 		CalculatePID(receivedThrottle, receivedRoll, receivedPitch, receivedYaw);
@@ -263,7 +260,7 @@ void FC_Flight_Loop(void)
 		fcLoopCount++;
 		if(fcLoopCount % 10 == 0) // only transmit RF messages every Nth loop cycle
 		{
-			if(FC_Transmit_32B(&groundData)) // transmit data without waiting for ACK
+			if(FC_Transmit_32B(&commandData)) // transmit data without waiting for ACK
 			{
 #ifdef UART_DEBUG
 				HAL_UART_Transmit(&huart6, (uint8_t *)"Transmit success...\r\n",
@@ -274,7 +271,7 @@ void FC_Flight_Loop(void)
 				HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
 						strlen(myTxData), 10); // 10 ms timeout
 #endif
-				groundData.count++;
+				commandData.count++;
 			}
 		}
 
