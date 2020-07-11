@@ -135,7 +135,7 @@ void Check_Error_Status() {
 	}
 }
 
-//#define UART_DEBUG
+#define UART_DEBUG
 extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
@@ -224,19 +224,19 @@ void FC_Flight_Loop(void)
 
 
 #ifdef UART_DEBUG
-			snprintf(myRxData, 32, "Gnd packets %lu \r\n", groundData.count);
+			snprintf(myRxData, 32, "Gnd packets %lu \r\n", commandData.count);
 			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
 
 			static int packetsLost = 0;
 			static int lastGroundCount = 0;
-			if(groundData.count - (lastGroundCount+1) != 0) // if packets have been dropped
+			if(commandData.count - (lastGroundCount+1) != 0) // if packets have been dropped
 			{
-				packetsLost += (groundData.count - (lastGroundCount+1));
+				packetsLost += (commandData.count - (lastGroundCount+1));
 			}
 			snprintf(myRxData, 32, "Packets lost = %d \r\n", packetsLost);
 			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
 
-			lastGroundCount = groundData.count;
+			lastGroundCount = commandData.count;
 #endif // UART_DEBUG
 
 		} // if(NRF24_available())

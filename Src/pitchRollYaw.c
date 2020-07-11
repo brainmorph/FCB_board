@@ -89,7 +89,7 @@ void CalculatePitchRollYaw(void)
 
 	/* Log data  */
 	//HAL_Delay(20);
-	log_mpu6050(accelX, accelY, accelZ, gyroX, gyroY, gyroZ, deltaT);
+	//log_mpu6050(accelX, accelY, accelZ, gyroX, gyroY, gyroZ, deltaT);
 
 
 //	if(PRY_Count < 10)
