@@ -135,9 +135,8 @@ void Check_Error_Status() {
 	}
 }
 
-
+#define UART_DEBUG
 extern StateData_t stateData;
-
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
@@ -263,13 +262,13 @@ void FC_Flight_Loop(void)
 			if(FC_Transmit_32B(&commandData)) // transmit data without waiting for ACK
 			{
 #ifdef UART_DEBUG
-				HAL_UART_Transmit(&huart6, (uint8_t *)"Transmit success...\r\n",
-					strlen("Transmit success...\r\n"), 10); // print success with 10 ms timeout
+//				HAL_UART_Transmit(&huart6, (uint8_t *)"Transmit success...\r\n",
+//					strlen("Transmit success...\r\n"), 10); // print success with 10 ms timeout
 
-				snprintf(myTxData, 32, "Sent packet # %lu\r\n",
-						groundData.count);
-				HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
-						strlen(myTxData), 10); // 10 ms timeout
+//				snprintf(myTxData, 32, "Sent packet # %lu\r\n",
+//						commandData.count);
+//				HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
+//						strlen(myTxData), 10); // 10 ms timeout
 #endif
 				commandData.count++;
 			}
@@ -281,27 +280,32 @@ void FC_Flight_Loop(void)
 
 		if(NRF24_available())
 		{
+			static float nrfAfailableCount = 0.0;
+			nrfAfailableCount += 1.0;
+
 #ifdef UART_DEBUG
-			HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n",
-				strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
+//			HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n",
+//				strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
 #endif // UART_DEBUG
 
 			NRF24_read(&telemetryData, sizeof(telemetryData)); // remember that NRF radio can at most transmit 32 bytes
 
+			/* Throw away error packets that come in as repeated values */
 			if(telemetryData.altitude == telemetryData.pitch)
 			{
-				// Throw away inexplicable packets that come in as the same value in the entire structure
 				continue;
 			}
+
+
+
+
+#ifdef UART_DEBUG
 			//receivedAltitude = *(float *)myRxData; // handle myRxData as a 4 byte float and read the value from it
 			volatile float receivedAltitude = telemetryData.altitude;
-
 			altimeter.preDecimal = (int) receivedAltitude;
 			altimeter.postDecimal = (int)((receivedAltitude - altimeter.preDecimal) * 100);
 			snprintf(myRxData, 32, "%u alt: %d.%d \r\n", (uint8_t)telemetryData.count, altimeter.preDecimal, altimeter.postDecimal);
-
-#ifdef UART_DEBUG
-			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
+			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print with 10 ms timeout
 
 			static int packetsLost = 0;
 			static int lastCount = 0;
@@ -309,7 +313,10 @@ void FC_Flight_Loop(void)
 			{
 				packetsLost += (telemetryData.count - (lastCount+1));
 			}
-			snprintf(myRxData, 32, "Packets lost = %d \r\n", packetsLost);
+
+
+			volatile int lostPacketRatio = (int)(((float)packetsLost/(float)nrfAfailableCount) * 100.0);
+			snprintf(myRxData, 64, "Packets lost = %d.  Lost packet ratio = %d % \r\n", packetsLost, lostPacketRatio);
 			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
 
 			lastCount = telemetryData.count;
