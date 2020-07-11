@@ -288,6 +288,11 @@ void FC_Flight_Loop(void)
 
 			NRF24_read(&telemetryData, sizeof(telemetryData)); // remember that NRF radio can at most transmit 32 bytes
 
+			if(telemetryData.altitude == telemetryData.pitch)
+			{
+				// Throw away inexplicable packets that come in as the same value in the entire structure
+				continue;
+			}
 			//receivedAltitude = *(float *)myRxData; // handle myRxData as a 4 byte float and read the value from it
 			volatile float receivedAltitude = telemetryData.altitude;
 
