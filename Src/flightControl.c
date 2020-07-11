@@ -135,13 +135,13 @@ void Check_Error_Status() {
 	}
 }
 
-#define UART_DEBUG
+//#define UART_DEBUG
 extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-//#define FLIGHT_PLATFORM
-#define GROUND_STATION
+#define FLIGHT_PLATFORM
+//#define GROUND_STATION
 	while(1)
     {
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
@@ -180,7 +180,7 @@ void FC_Flight_Loop(void)
 
 
 		NRF24_startListening();
-		//HAL_Delay(2);
+		HAL_Delay(1);
 
 
 		static volatile uint32_t receivedCount = 0;
