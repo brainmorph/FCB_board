@@ -180,7 +180,6 @@ void FC_Flight_Loop(void)
 
 
 		NRF24_startListening();
-
 		//HAL_Delay(2);
 
 
@@ -275,8 +274,7 @@ void FC_Flight_Loop(void)
 		}
 
 		NRF24_startListening();
-
-		HAL_Delay(2);
+		HAL_Delay(1);
 
 		if(NRF24_available())
 		{
@@ -304,7 +302,7 @@ void FC_Flight_Loop(void)
 			volatile float receivedAltitude = telemetryData.altitude;
 			altimeter.preDecimal = (int) receivedAltitude;
 			altimeter.postDecimal = (int)((receivedAltitude - altimeter.preDecimal) * 100);
-			snprintf(myRxData, 32, "%u alt: %d.%d \r\n", (uint8_t)telemetryData.count, altimeter.preDecimal, altimeter.postDecimal);
+			snprintf(myRxData, 64, "%li alt: %d.%d \r\n", telemetryData.count, altimeter.preDecimal, altimeter.postDecimal);
 			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print with 10 ms timeout
 
 			static int packetsLost = 0;
@@ -316,7 +314,7 @@ void FC_Flight_Loop(void)
 
 
 			volatile int lostPacketRatio = (int)(((float)packetsLost/(float)nrfAfailableCount) * 100.0);
-			snprintf(myRxData, 64, "Packets lost = %d.  Lost packet ratio = %d % \r\n", packetsLost, lostPacketRatio);
+			snprintf(myRxData, 64, "Packets lost = %d.  Lost packet ratio = %d %% \r\n", packetsLost, lostPacketRatio);
 			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
 
 			lastCount = telemetryData.count;
