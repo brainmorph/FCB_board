@@ -48,6 +48,7 @@ RadioPacket_t telemetryData = {0, 0.0, 0.0, 0.0, 0.0};
 typedef struct CommandPacket_t // this packet MUST BE 32 bytes in size
 {
 	uint32_t count;		// 4 bytes
+	float key;  // 4 bytes
 
 	float throttleSet;  // 4 bytes
 	float rollSet;		// 4 bytes
@@ -56,11 +57,10 @@ typedef struct CommandPacket_t // this packet MUST BE 32 bytes in size
 
 	uint32_t garbage1;	// 4 bytes
 	uint32_t garbage2; 	// 4 bytes
-	uint32_t garbage3;  // 4 bytes
 
 }CommandPacket_t; // this packet MUST BE 32 bytes in size
 
-CommandPacket_t commandData = {0, 0.0, 0.0, 0.0, 0.0};
+CommandPacket_t commandData = {0, (float)3.14, 0.0, 0.0, 0.0, 0.0};
 
 
 
@@ -135,7 +135,7 @@ void Check_Error_Status() {
 	}
 }
 
-#define UART_DEBUG
+//#define UART_DEBUG
 extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
@@ -190,12 +190,20 @@ void FC_Flight_Loop(void)
 		static volatile float receivedYaw = 0.0;
 		if(NRF24_available())
 		{
+			static float nrfAfailableCount = 0.0;
+			nrfAfailableCount += 1.0;
+
 #ifdef UART_DEBUG
 			HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n", 
 				strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
 #endif // UART_DEBUG
 
 			NRF24_read(&commandData, sizeof(commandData)); // remember that NRF radio can at most transmit 32 bytes
+
+			if((float)commandData.key != (float)3.14)
+			{
+				continue;
+			}
 
 			receivedCount = commandData.count;
 
@@ -221,6 +229,8 @@ void FC_Flight_Loop(void)
 				droppedPacket++;
 				oldCount = receivedCount;
 			}
+			volatile int lostPacketRatio = (int)(((float)droppedPacket/(float)nrfAfailableCount) * 100.0);
+			lostPacketRatio = lostPacketRatio;
 
 
 #ifdef UART_DEBUG
