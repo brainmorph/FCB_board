@@ -150,8 +150,8 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-//#define FLIGHT_PLATFORM
-#define GROUND_STATION
+#define FLIGHT_PLATFORM
+//#define GROUND_STATION
 	while(1)
     {
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
@@ -353,6 +353,11 @@ void FC_Flight_Loop(void)
 		uint8_t uartReceive[2] = {0};
 		uint8_t uartTransmit[25] = {0};
 		HAL_UART_Receive(&huart6, uartReceive, 1, 1);
+		if(uartReceive[0] != 0)
+		{
+			volatile int dummy = 1;
+			dummy = dummy;
+		}
 //		if(uartReceive[0] == 'i')
 //		{
 //			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
@@ -380,13 +385,15 @@ void FC_Flight_Loop(void)
 //		}
 		if(uartReceive[0] == 'w')
 		{
-			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
 			commandData.pitchSet += 3.0;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "pitch:%f", (float)commandData.pitchSet);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 's')
 		{
-			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
 			commandData.pitchSet -= 3.0;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "pitch:%f", commandData.pitchSet);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 'a')
 		{
