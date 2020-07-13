@@ -132,7 +132,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 /* Toggles LED based on state of I2C comms with BME280 AND based on any errors */
 void Check_Error_Status() {
 	if (BMFC_BME280_ConfirmI2C_Comms() == 0)    // check for BME280 comm. issues
-			{
+	{
 		HAL_TIM_Base_Stop_IT(&htim6); // stop the timer interrupt
 		HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 1); // turn on LED
 	} else {
@@ -160,7 +160,7 @@ void FC_Flight_Loop(void)
 		Check_Error_Status(); // toggle LED based on any error detection
 
 
-		if(fcLoopCount % 250 == 0) // blip the status LED every so often
+		if((log_totalErrorCount() == 0) && (fcLoopCount % 250 == 0)) // blip the status LED every so often
 		{
 			HAL_GPIO_TogglePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin);
 		}
