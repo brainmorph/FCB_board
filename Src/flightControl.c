@@ -125,13 +125,13 @@ void FC_Init(void)
 void Check_Error_Status() {
 	if (BMFC_BME280_ConfirmI2C_Comms() == 0)    // check for BME280 comm. issues
 			{
-		HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1); // turn on LED
+		HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 1); // turn on LED
 	} else {
-		HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 0); // turn off LED
+		HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 0); // turn off LED
 	}
 	if (log_totalErrorCount() != 0) // check for any error occurances
 			{
-		HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1); // turn on LED
+		HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 1); // turn on LED
 	}
 }
 
@@ -148,6 +148,9 @@ void FC_Flight_Loop(void)
 
 #ifdef FLIGHT_PLATFORM
 		Check_Error_Status(); // toggle LED based on any error detection
+
+
+		HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 1); // turn on LED
 
 
 		/* Transmit RF every Nth loop cycle */
