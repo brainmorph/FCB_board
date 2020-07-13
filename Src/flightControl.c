@@ -150,8 +150,8 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-#define FLIGHT_PLATFORM
-//#define GROUND_STATION
+//#define FLIGHT_PLATFORM
+#define GROUND_STATION
 	while(1)
     {
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
@@ -347,6 +347,105 @@ void FC_Flight_Loop(void)
 #endif // UART_DEBUG
 
 		} // if(NRF24_available())
+
+
+		// RX code----------------------------
+		uint8_t uartReceive[2] = {0};
+		uint8_t uartTransmit[25] = {0};
+		HAL_UART_Receive(&huart6, uartReceive, 1, 1);
+//		if(uartReceive[0] == 'i')
+//		{
+//			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+//			kp += 0.01;
+//
+//			commandData.throttleSet += 0.1;
+//		}
+//		if(uartReceive[0] == 'k')
+//		{
+//			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+//			kp -= 0.01;
+//
+//		}
+//		if(uartReceive[0] == 'u')
+//		{
+//			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+//			kd += 0.001;
+//
+//		}
+//		if(uartReceive[0] == 'j')
+//		{
+//			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+//			kd -= 0.001;
+//
+//		}
+		if(uartReceive[0] == 'w')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.pitchSet += 3.0;
+		}
+		if(uartReceive[0] == 's')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.pitchSet -= 3.0;
+		}
+		if(uartReceive[0] == 'a')
+		{
+			commandData.rollSet -= 3.0;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "roll:%f", commandData.rollSet);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
+		}
+		if(uartReceive[0] == 'd')
+		{
+			commandData.rollSet += 3.0;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "roll:%f", commandData.rollSet);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
+		}
+		if(uartReceive[0] == 'q')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.yawSet -= 3.0;
+		}
+		if(uartReceive[0] == 'e')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.yawSet += 3.0;
+		}
+		if(uartReceive[0] == '0' || uartReceive[0] == '`') // emergency shutoff.  reset all values
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.throttleSet = 0.0;
+			commandData.rollSet = 0.0;
+			commandData.pitchSet = 0.0;
+			commandData.yawSet = 0.0;
+//			commandData.emergencyOff = 1.0;
+//			calculatedRollAngle = 0;
+//			calculatedPitchAngle = 0;
+//			calculatedYawAngle = 0;
+//			kp = 0;
+//			kd = 0;
+		}
+		if(uartReceive[0] == '1')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.throttleSet += 1.0;
+		}
+		if(uartReceive[0] == '2')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.throttleSet -= 3.0;
+		}
+		if(uartReceive[0] == '5')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.throttleSet = 0.0;
+		}
+
+//		if(uartReceive[0] == '$')
+//		{
+//			rxWatchdogFlag = 1;
+//		}
+
+		// RX code end------------------------------------
 
 #endif // GROUND_STATION
 
