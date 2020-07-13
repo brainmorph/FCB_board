@@ -81,6 +81,8 @@ char myRxData[50];
 
 void FC_Init(void)
 {
+	HAL_TIM_Base_Start_IT(&htim6); //Start the timer interrupt
+
 	BMFC_BME280_Init(); // Initialize the BME280 sensor
 
 	NRF24_begin(GPIOB, SPI1_CS_Pin, SPI1_CE_Pin, hspi1);
@@ -118,19 +120,27 @@ void FC_Init(void)
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
 }
 
-
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	// This callback is automatically called by the HAL on the UEV event
+	if(htim->Instance == TIM6)
+	{
+		HAL_GPIO_TogglePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin);
+	}
+}
 
 
 /* Toggles LED based on state of I2C comms with BME280 AND based on any errors */
 void Check_Error_Status() {
 	if (BMFC_BME280_ConfirmI2C_Comms() == 0)    // check for BME280 comm. issues
 			{
+		HAL_TIM_Base_Stop_IT(&htim6); // stop the timer interrupt
 		HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 1); // turn on LED
 	} else {
 		HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 0); // turn off LED
 	}
 	if (log_totalErrorCount() != 0) // check for any error occurances
 			{
+		HAL_TIM_Base_Stop_IT(&htim6); // stop the timer interrupt
 		HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 1); // turn on LED
 	}
 }
@@ -150,7 +160,7 @@ void FC_Flight_Loop(void)
 		Check_Error_Status(); // toggle LED based on any error detection
 
 
-		HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 1); // turn on LED
+		//HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 1); // turn on LED
 
 
 		/* Transmit RF every Nth loop cycle */
