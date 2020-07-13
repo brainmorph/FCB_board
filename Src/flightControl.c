@@ -81,7 +81,7 @@ char myRxData[50];
 
 void FC_Init(void)
 {
-	HAL_TIM_Base_Start_IT(&htim6); //Start the timer interrupt
+	//HAL_TIM_Base_Start_IT(&htim6); //Start the timer interrupt
 
 	BMFC_BME280_Init(); // Initialize the BME280 sensor
 
@@ -160,7 +160,10 @@ void FC_Flight_Loop(void)
 		Check_Error_Status(); // toggle LED based on any error detection
 
 
-		//HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 1); // turn on LED
+		if(fcLoopCount % 250 == 0) // blip the status LED every so often
+		{
+			HAL_GPIO_TogglePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin);
+		}
 
 
 		/* Transmit RF every Nth loop cycle */
