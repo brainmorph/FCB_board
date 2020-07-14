@@ -81,6 +81,42 @@ char myRxData[50];
 
 void FC_Init(void)
 {
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
+
+
+	/* Initialize ESC */
+	int max = 4000; // 80MHz with pre-scalar 40 and counter period 40,000
+	int min = 2000; // 80MHz with pre-scalar 40 and counter period 40,000
+
+	int range = max - min;
+
+	// set all PWM to max setting while ESCs come online
+	int setting = (100.0/100.0) * (float)range; // take a percentage out of max allowable range
+	setting += min; // add new value to minimum setting
+
+	htim2.Instance->CCR1 = setting;
+	htim2.Instance->CCR2 = setting;
+	htim2.Instance->CCR3 = setting;
+	htim2.Instance->CCR4 = setting;
+
+	// wait for ESC beep
+	HAL_Delay(1500);
+
+
+	// set all PWM to minimum setting
+	setting = min;
+
+	htim2.Instance->CCR1 = setting;
+	htim2.Instance->CCR2 = setting;
+	htim2.Instance->CCR3 = setting;
+	htim2.Instance->CCR4 = setting;
+
+	/* End of ESC init */
+
+
 	//HAL_TIM_Base_Start_IT(&htim6); //Start the timer interrupt
 
 	BMFC_BME280_Init(); // Initialize the BME280 sensor
@@ -114,10 +150,7 @@ void FC_Init(void)
 	CollectInitalSensorValues();
 
 
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
+
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
