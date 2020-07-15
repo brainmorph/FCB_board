@@ -155,7 +155,7 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 
 
-	static float kp = 2.0;
+	static float kp = 0.6;
 	static float kd = 0.02;
 
 	volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;

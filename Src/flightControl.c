@@ -103,7 +103,7 @@ void FC_Init(void)
 	htim2.Instance->CCR4 = setting;
 
 	// wait for ESC beep
-	HAL_Delay(1500);
+	HAL_Delay(5500);
 
 
 	// set all PWM to minimum setting
