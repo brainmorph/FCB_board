@@ -87,7 +87,7 @@ void FC_Init(void)
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
 
 
-	/* Initialize ESC */
+	/* Program ESC */
 	int max = 4000; // 80MHz with pre-scalar 40 and counter period 40,000
 	int min = 2000; // 80MHz with pre-scalar 40 and counter period 40,000
 
@@ -103,7 +103,7 @@ void FC_Init(void)
 	htim2.Instance->CCR4 = setting;
 
 	// wait for ESC beep
-	HAL_Delay(5500);
+	HAL_Delay(7000);
 
 
 	// set all PWM to minimum setting
