@@ -36,15 +36,29 @@ float motor1Setting=0.0, motor2Setting=0.0, motor3Setting=0.0, motor4Setting=0.0
 void setPWM(float motor1, float motor2, float motor3, float motor4)
 {
 
+	float motorMin = 5.0;
 	/* Clip min motor output */
-	if(motor1 < 5)
+	if(motor1 < motorMin)
 		motor1 = 0;
-	if(motor2 < 5)
+	if(motor2 < motorMin)
 		motor2 = 0;
-	if(motor3 < 5)
+	if(motor3 < motorMin)
 		motor3 = 0;
-	if(motor4 < 5)
+	if(motor4 < motorMin)
 		motor4 = 0;
+
+	/* Prevent motors from turning completely off if any of the motors are non-zero */
+	if((motor1 > motorMin) || (motor2 > motorMin) || (motor3 > motorMin) || (motor4 > motorMin))
+	{
+		if(motor1 < motorMin)
+			motor1 = motorMin;
+		if(motor2 < motorMin)
+			motor2 = motorMin;
+		if(motor3 < motorMin)
+			motor3 = motorMin;
+		if(motor4 < motorMin)
+			motor4 = motorMin;
+	}
 
 	/* Clip max motor output */
 	float motorMax = 60;
@@ -88,22 +102,22 @@ void setPWM(float motor1, float motor2, float motor3, float motor4)
 	int range = max - min;
 
 	// motor 1
-	int setting = (motor1Setting/100.0) * (float)range; // take a percentage out of max allowable range
+	int setting = (motor1/100.0) * (float)range; // take a percentage out of max allowable range
 	setting += min; // add new value to minimum setting
 	htim2.Instance->CCR1 = setting;
 
 	// motor 2
-	setting = (motor2Setting/100.0) * (float)range; // take a percentage out of max allowable range
+	setting = (motor2/100.0) * (float)range; // take a percentage out of max allowable range
 	setting += min;
 	htim2.Instance->CCR2 = setting;
 
 	// motor 3
-	setting = (motor3Setting/100.0) * (float)range; // take a percentage out of max allowable range
+	setting = (motor3/100.0) * (float)range; // take a percentage out of max allowable range
 	setting += min;
 	htim2.Instance->CCR3 = setting;
 
 	// motor 4
-	setting = (motor4Setting/100.0) * (float)range; // take a percentage out of max allowable range
+	setting = (motor4/100.0) * (float)range; // take a percentage out of max allowable range
 	setting += min;
 	htim2.Instance->CCR4 = setting;
 
