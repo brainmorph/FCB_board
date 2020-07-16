@@ -179,8 +179,8 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 
 
-	static float kp = 0.6;
-	static float kd = 0.02;
+	static float kp = 0.2;
+	static float kd = 0.0;
 
 	kp += kpOffset; // add Kp offset from ground station
 	kd += kdOffset; // add Kd offset from ground station
