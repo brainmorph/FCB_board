@@ -46,7 +46,7 @@ float motor1Setting=0.0, motor2Setting=0.0, motor3Setting=0.0, motor4Setting=0.0
 void setPWM(int arm, float motor1, float motor2, float motor3, float motor4)
 {
 
-	float motorMin = 5.0;
+	float motorMin = 12.0;
 
 	/* Prevent motors from turning completely off if quad is armed */
 	if(arm != 0)
