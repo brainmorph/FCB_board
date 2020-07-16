@@ -237,6 +237,8 @@ void FC_Flight_Loop(void)
 		static volatile float receivedRoll = 0.0;
 		static volatile float receivedPitch = 0.0;
 		static volatile float receivedYaw = 0.0;
+		static volatile float receivedKpOffset = 0.0;
+		static volatile float receivedKdOffset = 0.0;
 		if(NRF24_available())
 		{
 			static float nrfAfailableCount = 0.0;
@@ -269,6 +271,11 @@ void FC_Flight_Loop(void)
 				receivedPitch = commandData.pitchSet;
 			if((commandData.yawSet >= -cappedAngle) && (commandData.yawSet < cappedAngle))
 				receivedYaw = commandData.yawSet;
+
+			if((commandData.kpOffset >= -2.0) && (commandData.kpOffset <= 2.0))
+				receivedKpOffset = commandData.kpOffset;
+			if((commandData.kdOffset >= -2.0) && (commandData.kdOffset <= 2.0))
+				receivedKdOffset = commandData.kdOffset;
 
 			/* Check for dropped packets */
 			static uint32_t oldCount = 0;
@@ -305,7 +312,7 @@ void FC_Flight_Loop(void)
 
 		/* >>> BY THIS POINT ALL ORIENTATION ANGLES SHOULD BE FULLY COMPUTED <<< */
 
-		CalculatePID(receivedThrottle, receivedRoll, receivedPitch, receivedYaw, commandData.kpOffset, commandData.kdOffset);
+		CalculatePID(receivedThrottle, receivedRoll, receivedPitch, receivedYaw, receivedKpOffset, receivedKdOffset);
 
 
 
