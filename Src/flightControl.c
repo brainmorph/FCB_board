@@ -55,12 +55,12 @@ typedef struct CommandPacket_t // this packet MUST BE 32 bytes in size
 	float pitchSet;		// 4 bytes
 	float yawSet;		// 4 bytes
 
-	uint32_t garbage1;	// 4 bytes
-	uint32_t garbage2; 	// 4 bytes
+	float kpOffset;	// 4 bytes
+	float kdOffset; 	// 4 bytes
 
 }CommandPacket_t; // this packet MUST BE 32 bytes in size
 
-CommandPacket_t commandData = {0, (float)3.14, 0.0, 0.0, 0.0, 0.0};
+CommandPacket_t commandData = {0, (float)3.14, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 
 
@@ -88,31 +88,31 @@ void FC_Init(void)
 
 
 	/* Program ESC */
-	int max = 4000; // 80MHz with pre-scalar 40 and counter period 40,000
-	int min = 2000; // 80MHz with pre-scalar 40 and counter period 40,000
-
-	int range = max - min;
-
-	// set all PWM to max setting while ESCs come online
-	int setting = (100.0/100.0) * (float)range; // take a percentage out of max allowable range
-	setting += min; // add new value to minimum setting
-
-	htim2.Instance->CCR1 = setting;
-	htim2.Instance->CCR2 = setting;
-	htim2.Instance->CCR3 = setting;
-	htim2.Instance->CCR4 = setting;
-
-	// wait for ESC beep
-	HAL_Delay(7000);
-
-
-	// set all PWM to minimum setting
-	setting = min;
-
-	htim2.Instance->CCR1 = setting;
-	htim2.Instance->CCR2 = setting;
-	htim2.Instance->CCR3 = setting;
-	htim2.Instance->CCR4 = setting;
+//	int max = 4000; // 80MHz with pre-scalar 40 and counter period 40,000
+//	int min = 2000; // 80MHz with pre-scalar 40 and counter period 40,000
+//
+//	int range = max - min;
+//
+//	// set all PWM to max setting while ESCs come online
+//	int setting = (100.0/100.0) * (float)range; // take a percentage out of max allowable range
+//	setting += min; // add new value to minimum setting
+//
+//	htim2.Instance->CCR1 = setting;
+//	htim2.Instance->CCR2 = setting;
+//	htim2.Instance->CCR3 = setting;
+//	htim2.Instance->CCR4 = setting;
+//
+//	// wait for ESC beep
+//	HAL_Delay(7000);
+//
+//
+//	// set all PWM to minimum setting
+//	setting = min;
+//
+//	htim2.Instance->CCR1 = setting;
+//	htim2.Instance->CCR2 = setting;
+//	htim2.Instance->CCR3 = setting;
+//	htim2.Instance->CCR4 = setting;
 
 	/* End of ESC init */
 
@@ -183,8 +183,8 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-#define FLIGHT_PLATFORM
-//#define GROUND_STATION
+//#define FLIGHT_PLATFORM
+#define GROUND_STATION
 	while(1)
     {
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
@@ -305,7 +305,7 @@ void FC_Flight_Loop(void)
 
 		/* >>> BY THIS POINT ALL ORIENTATION ANGLES SHOULD BE FULLY COMPUTED <<< */
 
-		CalculatePID(receivedThrottle, receivedRoll, receivedPitch, receivedYaw);
+		CalculatePID(receivedThrottle, receivedRoll, receivedPitch, receivedYaw, commandData.kpOffset, commandData.kdOffset);
 
 
 
@@ -391,31 +391,33 @@ void FC_Flight_Loop(void)
 			volatile int dummy = 1;
 			dummy = dummy;
 		}
-//		if(uartReceive[0] == 'i')
-//		{
-//			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
-//			kp += 0.01;
-//
-//			commandData.throttleSet += 0.1;
-//		}
-//		if(uartReceive[0] == 'k')
-//		{
-//			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
-//			kp -= 0.01;
-//
-//		}
-//		if(uartReceive[0] == 'u')
-//		{
-//			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
-//			kd += 0.001;
-//
-//		}
-//		if(uartReceive[0] == 'j')
-//		{
-//			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
-//			kd -= 0.001;
-//
-//		}
+		if(uartReceive[0] == 'i')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			//kp += 0.01;
+			commandData.kpOffset += 0.01;
+		}
+		if(uartReceive[0] == 'k')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			//kp -= 0.01;
+			commandData.kpOffset -= 0.01;
+
+		}
+		if(uartReceive[0] == 'u')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			//kd += 0.001;
+			commandData.kdOffset += 0.001;
+
+		}
+		if(uartReceive[0] == 'j')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			//kd -= 0.001;
+			commandData.kpOffset -= 0.001;
+
+		}
 		if(uartReceive[0] == 'w')
 		{
 			commandData.pitchSet += 3.0;
@@ -457,12 +459,10 @@ void FC_Flight_Loop(void)
 			commandData.rollSet = 0.0;
 			commandData.pitchSet = 0.0;
 			commandData.yawSet = 0.0;
+
+			commandData.kpOffset = 0.0;
+			commandData.kdOffset = 0.0;
 //			commandData.emergencyOff = 1.0;
-//			calculatedRollAngle = 0;
-//			calculatedPitchAngle = 0;
-//			calculatedYawAngle = 0;
-//			kp = 0;
-//			kd = 0;
 		}
 		if(uartReceive[0] == '1')
 		{

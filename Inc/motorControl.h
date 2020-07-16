@@ -24,7 +24,7 @@ typedef struct StateData_t
 void mixPWM(float thrust, float roll, float pitch, float yaw);
 void setPWM(float motor1, float motor2, float motor3, float motor4);
 
-void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet);
+void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet, float kpOffset, float kdOffset);
 
 
 #endif /* MOTORCONTROL_H_ */

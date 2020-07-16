@@ -128,7 +128,7 @@ void GatherSensorData()
 	stateData.deltaT = LastDeltaT();
 }
 
-void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet)
+void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet, float kpOffset, float kdOffset)
 {
 	GatherSensorData();
 
@@ -157,6 +157,9 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 	static float kp = 0.6;
 	static float kd = 0.02;
+
+	kp += kpOffset; // add Kp offset from ground station
+	kd += kdOffset; // add Kd offset from ground station
 
 	volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
 	rollCmd = kp * errorRoll + kd * derivativeRoll; // negative roll command means roll in negative direction
