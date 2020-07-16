@@ -28,28 +28,30 @@ void mixPWM(float thrust, float roll, float pitch, float yaw)
 	float BR = thrust + yaw - pitch - roll;
 	float BL = thrust - yaw - pitch + roll;
 
-	setPWM(FL, FR, BR, BL);
+	static int arm = 0;
+	if(thrust > 0.0)
+	{
+		arm = 1;
+	}
+	else
+	{
+		arm = 0;
+	}
+
+	setPWM(arm, FL, FR, BR, BL);
 }
 
 // each setting represents motor throttle from 0 to 100%
 float motor1Setting=0.0, motor2Setting=0.0, motor3Setting=0.0, motor4Setting=0.0;
-void setPWM(float motor1, float motor2, float motor3, float motor4)
+void setPWM(int arm, float motor1, float motor2, float motor3, float motor4)
 {
 
 	float motorMin = 5.0;
-	/* Clip min motor output */
-	if(motor1 < motorMin)
-		motor1 = 0;
-	if(motor2 < motorMin)
-		motor2 = 0;
-	if(motor3 < motorMin)
-		motor3 = 0;
-	if(motor4 < motorMin)
-		motor4 = 0;
 
-	/* Prevent motors from turning completely off if any of the motors are non-zero */
-	if((motor1 > motorMin) || (motor2 > motorMin) || (motor3 > motorMin) || (motor4 > motorMin))
+	/* Prevent motors from turning completely off if quad is armed */
+	if(arm != 0)
 	{
+		/* Clip min motor output */
 		if(motor1 < motorMin)
 			motor1 = motorMin;
 		if(motor2 < motorMin)
@@ -58,6 +60,14 @@ void setPWM(float motor1, float motor2, float motor3, float motor4)
 			motor3 = motorMin;
 		if(motor4 < motorMin)
 			motor4 = motorMin;
+	}
+	else // if quad is un-armed, turn off all props
+	{
+		/* Clip min motor output */
+		motor1 = 0;
+		motor2 = 0;
+		motor3 = 0;
+		motor4 = 0;
 	}
 
 	/* Clip max motor output */
