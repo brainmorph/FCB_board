@@ -393,60 +393,66 @@ void FC_Flight_Loop(void)
 		uint8_t uartReceive[2] = {0};
 		uint8_t uartTransmit[25] = {0};
 		HAL_UART_Receive(&huart6, uartReceive, 1, 1);
-		if(uartReceive[0] != 0)
-		{
-			volatile int dummy = 1;
-			dummy = dummy;
-		}
+//		if(uartReceive[0] != 0) // for debugging
+//		{
+//			volatile int dummy = 1;
+//			dummy = dummy;
+//		}
 		if(uartReceive[0] == 'i')
 		{
 			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
 			//kp += 0.01;
 			commandData.kpOffset += 0.01;
+
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kp Offset:%f\r\n", (float)commandData.kpOffset);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 'k')
 		{
 			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
 			//kp -= 0.01;
 			commandData.kpOffset -= 0.01;
-
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kp Offset:%f\r\n", (float)commandData.kpOffset);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 'u')
 		{
 			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
 			//kd += 0.001;
 			commandData.kdOffset += 0.001;
-
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kd Offset:%f\r\n", (float)commandData.kdOffset);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 'j')
 		{
 			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
 			//kd -= 0.001;
-			commandData.kpOffset -= 0.001;
-
+			commandData.kdOffset -= 0.001;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kd Offset:%f\r\n", (float)commandData.kdOffset);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 'w')
 		{
 			commandData.pitchSet += 3.0;
-			snprintf((char *)uartTransmit, sizeof(uartTransmit), "pitch:%f", (float)commandData.pitchSet);
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "pitch:%f\r\n", (float)commandData.pitchSet);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 's')
 		{
 			commandData.pitchSet -= 3.0;
-			snprintf((char *)uartTransmit, sizeof(uartTransmit), "pitch:%f", commandData.pitchSet);
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "pitch:%f\r\n", commandData.pitchSet);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 'a')
 		{
 			commandData.rollSet -= 3.0;
-			snprintf((char *)uartTransmit, sizeof(uartTransmit), "roll:%f", commandData.rollSet);
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "roll:%f\r\n", commandData.rollSet);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 'd')
 		{
 			commandData.rollSet += 3.0;
-			snprintf((char *)uartTransmit, sizeof(uartTransmit), "roll:%f", commandData.rollSet);
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "roll:%f\r\n", commandData.rollSet);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 'q')
@@ -470,6 +476,8 @@ void FC_Flight_Loop(void)
 			commandData.kpOffset = 0.0;
 			commandData.kdOffset = 0.0;
 //			commandData.emergencyOff = 1.0;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Emergency off\r\n");
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == '1')
 		{
