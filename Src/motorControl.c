@@ -204,12 +204,9 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	static float kp = 0.2;
 	static float kd = 0.0;
 
-	kp += kpOffset; // add Kp offset from ground station
-	kd += kdOffset; // add Kd offset from ground station
-
 	volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
-	rollCmd = kp * errorRoll + kd * derivativeRoll; // negative roll command means roll in negative direction
-	pitchCmd = kp * errorPitch + kd * derivativePitch; // negative pitch command means pitch in negative direction
+	rollCmd = (kp + kpOffset) * errorRoll + (kd + kdOffset) * derivativeRoll; // negative roll command means roll in negative direction
+	pitchCmd = (kp + kpOffset) * errorPitch + (kd = kdOffset) * derivativePitch; // negative pitch command means pitch in negative direction
 	yawCmd = kp * errorYaw; // WAS:  "+ kd * derivativeYaw"	// negative yaw command means yaw in negative direction
 
 

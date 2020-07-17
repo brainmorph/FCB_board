@@ -365,13 +365,17 @@ void FC_Flight_Loop(void)
 
 
 
-
+#define UART_DEBUG
 #ifdef UART_DEBUG
 			//receivedAltitude = *(float *)myRxData; // handle myRxData as a 4 byte float and read the value from it
 			volatile float receivedAltitude = telemetryData.altitude;
-			altimeter.preDecimal = (int) receivedAltitude;
-			altimeter.postDecimal = (int)((receivedAltitude - altimeter.preDecimal) * 100);
-			snprintf(myRxData, 64, "%li alt: %d.%d \r\n", telemetryData.count, altimeter.preDecimal, altimeter.postDecimal);
+			volatile float receivedRoll = telemetryData.roll;
+			volatile float receivedPitch = telemetryData.pitch;
+			volatile float receivedYaw = telemetryData.yaw;
+
+
+			snprintf(myRxData, 128, "%li alt: %f     roll: %f     pitch: %f     yaw: %f \r\n",
+					telemetryData.count, receivedAltitude, receivedRoll, receivedPitch, receivedYaw);
 			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print with 10 ms timeout
 
 			static int packetsLost = 0;
@@ -388,6 +392,7 @@ void FC_Flight_Loop(void)
 
 			lastCount = telemetryData.count;
 #endif // UART_DEBUG
+#undef UART_DEBUG
 
 		} // if(NRF24_available())
 
