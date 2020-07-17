@@ -76,25 +76,34 @@ void setPWM(int arm, float motor1, float motor2, float motor3, float motor4)
 	float motorMin = 12.0;
 
 	/* Clip min motor output */
-	/* Prevent motors from turning completely off if quad is armed */
-	if(arm != 0)
-	{
-		if(motor1 < motorMin)
-			motor1 = motorMin;
-		if(motor2 < motorMin)
-			motor2 = motorMin;
-		if(motor3 < motorMin)
-			motor3 = motorMin;
-		if(motor4 < motorMin)
-			motor4 = motorMin;
-	}
-	else // if quad is un-armed, turn off all props
-	{
-		motor1 = 0;
-		motor2 = 0;
-		motor3 = 0;
-		motor4 = 0;
-	}
+	if(motor1 < motorMin)
+		motor1 = 0.0;
+	if(motor2 < motorMin)
+		motor2 = 0.0;
+	if(motor3 < motorMin)
+		motor3 = 0.0;
+	if(motor4 < motorMin)
+		motor4 = 0.0;
+
+//	/* Prevent motors from turning completely off if quad is armed */
+//	if(arm != 0)
+//	{
+//		if(motor1 < motorMin)
+//			motor1 = motorMin;
+//		if(motor2 < motorMin)
+//			motor2 = motorMin;
+//		if(motor3 < motorMin)
+//			motor3 = motorMin;
+//		if(motor4 < motorMin)
+//			motor4 = motorMin;
+//	}
+//	else // if quad is un-armed, turn off all props
+//	{
+//		motor1 = 0;
+//		motor2 = 0;
+//		motor3 = 0;
+//		motor4 = 0;
+//	}
 
 	/* Clip max motor output */
 	float motorMax = 60;
