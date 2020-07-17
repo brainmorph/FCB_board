@@ -41,6 +41,33 @@ void mixPWM(float thrust, float roll, float pitch, float yaw)
 	setPWM(arm, FL, FR, BR, BL);
 }
 
+static void changePWMincrementally(float* motorID, float* motorIDsetting)
+{
+	int stepSize = 5;
+	if(*motorID > *motorIDsetting)
+	{
+		if(*motorID - *motorIDsetting > stepSize)
+		{
+			*motorIDsetting += 1;
+		}
+		else
+		{
+			*motorIDsetting += stepSize;
+		}
+	}
+	else if(*motorID < *motorIDsetting)
+	{
+		if(*motorIDsetting - *motorID > stepSize)
+		{
+			*motorIDsetting -= 1;
+		}
+		else
+		{
+			*motorIDsetting -= stepSize;
+		}
+	}
+}
+
 // each setting represents motor throttle from 0 to 100%
 float motor1Setting=0.0, motor2Setting=0.0, motor3Setting=0.0, motor4Setting=0.0;
 void setPWM(int arm, float motor1, float motor2, float motor3, float motor4)
@@ -81,24 +108,11 @@ void setPWM(int arm, float motor1, float motor2, float motor3, float motor4)
 	if(motor4 > motorMax)
 		motor4 = motorMax;
 
-	// transition speed one step at a time
-	if(motor1 > motor1Setting)
-		motor1Setting += 1;
-	if(motor2 > motor2Setting)
-		motor2Setting += 1;
-	if(motor3 > motor3Setting)
-		motor3Setting += 1;
-	if(motor4 > motor4Setting)
-		motor4Setting += 1;
-
-	if(motor1 < motor1Setting)
-		motor1Setting -= 1;
-	if(motor2 < motor2Setting)
-		motor2Setting -= 1;
-	if(motor3 < motor3Setting)
-		motor3Setting -= 1;
-	if(motor4 < motor4Setting)
-		motor4Setting -= 1;
+	// transition PWM incrementally
+	changePWMincrementally(&motor1, &motor1Setting);
+	changePWMincrementally(&motor2, &motor2Setting);
+	changePWMincrementally(&motor3, &motor3Setting);
+	changePWMincrementally(&motor4, &motor4Setting);
 
 
 	// TODO: update min and max values to match new timer settings (I want higher resolution control)
