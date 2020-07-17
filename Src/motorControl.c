@@ -75,10 +75,10 @@ void setPWM(int arm, float motor1, float motor2, float motor3, float motor4)
 
 	float motorMin = 12.0;
 
+	/* Clip min motor output */
 	/* Prevent motors from turning completely off if quad is armed */
 	if(arm != 0)
 	{
-		/* Clip min motor output */
 		if(motor1 < motorMin)
 			motor1 = motorMin;
 		if(motor2 < motorMin)
@@ -90,7 +90,6 @@ void setPWM(int arm, float motor1, float motor2, float motor3, float motor4)
 	}
 	else // if quad is un-armed, turn off all props
 	{
-		/* Clip min motor output */
 		motor1 = 0;
 		motor2 = 0;
 		motor3 = 0;
@@ -180,8 +179,8 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 	/* LPF the error terms */
 	static float lpfErrorRoll=0.0, lpfErrorPitch=0.0, lpfErrorRollOLD = 0.0, lpfErrorPitchOLD = 0.0;
-	lpfErrorRoll = 0.9 * lpfErrorRoll + (1 - 0.9) * errorRoll;
-	lpfErrorPitch = 0.9 * lpfErrorPitch + (1 - 0.9) * errorPitch;
+	lpfErrorRoll = 0.3 * lpfErrorRoll + (1 - 0.3) * errorRoll;
+	lpfErrorPitch = 0.3 * lpfErrorPitch + (1 - 0.3) * errorPitch;
 
 
 	/* Calculate derivative of error terms */

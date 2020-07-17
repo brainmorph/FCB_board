@@ -88,32 +88,35 @@ void FC_Init(void)
 
 
 	/* Program ESC */
-//	int max = 4000; // 80MHz with pre-scalar 40 and counter period 40,000
-//	int min = 2000; // 80MHz with pre-scalar 40 and counter period 40,000
-//
-//	int range = max - min;
-//
-//	// set all PWM to max setting while ESCs come online
-//	int setting = (100.0/100.0) * (float)range; // take a percentage out of max allowable range
-//	setting += min; // add new value to minimum setting
-//
-//	htim2.Instance->CCR1 = setting;
-//	htim2.Instance->CCR2 = setting;
-//	htim2.Instance->CCR3 = setting;
-//	htim2.Instance->CCR4 = setting;
-//
-//	// wait for ESC beep
-//	HAL_Delay(7000);
-//
-//
-//	// set all PWM to minimum setting
-//	setting = min;
-//
-//	htim2.Instance->CCR1 = setting;
-//	htim2.Instance->CCR2 = setting;
-//	htim2.Instance->CCR3 = setting;
-//	htim2.Instance->CCR4 = setting;
+//#define PROGRAM_ESC
 
+#ifdef PROGRAM_ESC
+	int max = 4000; // 80MHz with pre-scalar 40 and counter period 40,000
+	int min = 2000; // 80MHz with pre-scalar 40 and counter period 40,000
+
+	int range = max - min;
+
+	// set all PWM to max setting while ESCs come online
+	int setting = (100.0/100.0) * (float)range; // take a percentage out of max allowable range
+	setting += min; // add new value to minimum setting
+
+	htim2.Instance->CCR1 = setting;
+	htim2.Instance->CCR2 = setting;
+	htim2.Instance->CCR3 = setting;
+	htim2.Instance->CCR4 = setting;
+
+	// wait for ESC beep
+	HAL_Delay(7000);
+
+
+	// set all PWM to minimum setting
+	setting = min;
+
+	htim2.Instance->CCR1 = setting;
+	htim2.Instance->CCR2 = setting;
+	htim2.Instance->CCR3 = setting;
+	htim2.Instance->CCR4 = setting;
+#endif
 	/* End of ESC init */
 
 
