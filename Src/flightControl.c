@@ -42,7 +42,7 @@ typedef struct RadioPacket_t // this packet MUST BE 32 bytes in size
 	uint32_t garbage6; // 4 bytes
 }RadioPacket_t; // this packet MUST BE 32 bytes in size
 
-RadioPacket_t telemetryData = {0, 0.0, 0.0, 0.0, 0.0};
+RadioPacket_t telemetryData = {0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 
 typedef struct CommandPacket_t // this packet MUST BE 32 bytes in size
