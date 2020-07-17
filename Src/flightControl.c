@@ -38,11 +38,17 @@ typedef struct RadioPacket_t // this packet MUST BE 32 bytes in size
 	float deltaT;	// 4 bytes
 
 	/* Fill in the rest of the struct to make it be 32 bytes in total */
-	uint32_t garbage5; // 4 bytes
-	uint32_t garbage6; // 4 bytes
+	float test1; // 4 bytes
+	float test2; // 4 bytes
+	float test3; // 4 bytes
+	float test4; // 4 bytes
+	float test5; // 4 bytes
+	float test6; // 4 bytes
+	float test7; // 4 bytes
+	float test8; // 4 bytes
 }RadioPacket_t; // this packet MUST BE 32 bytes in size
 
-RadioPacket_t telemetryData = {0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+RadioPacket_t telemetryData = {0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 
 typedef struct CommandPacket_t // this packet MUST BE 32 bytes in size
@@ -213,8 +219,17 @@ void FC_Flight_Loop(void)
 			telemetryData.yaw = stateData.yaw;
 			telemetryData.deltaT = stateData.deltaT;
 
+			telemetryData.test1 = 1.0;
+			telemetryData.test2 = 2.0;
+			telemetryData.test3 = 3.0;
+			telemetryData.test4 = 4.0;
+			telemetryData.test5 = 5.0;
+			telemetryData.test6 = 6.0;
+			telemetryData.test7 = 7.0;
+			telemetryData.test8 = 8.0;
+
 			/* Send data */
-			if(FC_Transmit_32B(&telemetryData)) // transmit data without waiting for ACK
+			if(FC_Transmit_Xbytes(&telemetryData, sizeof(RadioPacket_t))) // transmit data without waiting for ACK
 			{
 #ifdef UART_DEBUG
 				HAL_UART_Transmit(&huart6, (uint8_t *)"Transmit success...\r\n",
