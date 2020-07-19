@@ -192,7 +192,7 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 #ifdef UART_DEBUG
 	char debugMessage[100];
 
-	snprintf(debugMessage, 100, "errorRoll = %f     errorPitch = %f     errorYaw = %f \r\n", errorRoll, errorPitch, errorYaw);
+	snprintf(debugMessage, 100, "errorRoll = %f     errorPitch = %f     errorYaw = %f     ", errorRoll, errorPitch, errorYaw);
 	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
 #endif
 
@@ -221,7 +221,7 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	yawCmd = 0.0; // TURN OFF YAW TEMPORARILY
 
 #ifdef UART_DEBUG
-	snprintf(debugMessage, 100, "kp = %f, kpOffset = %f     kd = %f, kdOffset = %f \r\n", kp, kpOffset, kd, kdOffset);
+	snprintf(debugMessage, 100, "kp = %f, kpOffset = %f     kd = %f, kdOffset = %f     ", kp, kpOffset, kd, kdOffset);
 	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
 
 	snprintf(debugMessage, 100, "rollCmd = %f     pitchCmd = %f \r\n", rollCmd, pitchCmd);
