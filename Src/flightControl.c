@@ -38,14 +38,8 @@ typedef struct RadioPacket_t // this packet MUST BE 32 bytes in size
 	float deltaT;	// 4 bytes
 
 	/* Fill in the rest of the struct to make it be 32 bytes in total */
-	float test1; // 4 bytes
-	float test2; // 4 bytes
-	float test3; // 4 bytes
-	float test4; // 4 bytes
-	float test5; // 4 bytes
-	float test6; // 4 bytes
-	float test7; // 4 bytes
-	float test8; // 4 bytes
+	float garbage1; // 4 bytes
+	float garbage2; // 4 bytes
 }RadioPacket_t; // this packet MUST BE 32 bytes in size
 
 RadioPacket_t telemetryData = {0, 0.0, 0.0, 0.0, 0.0, 0.0};
@@ -192,8 +186,8 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-#define FLIGHT_PLATFORM
-//#define GROUND_STATION
+//#define FLIGHT_PLATFORM
+#define GROUND_STATION
 	while(1)
     {
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
