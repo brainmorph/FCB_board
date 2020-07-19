@@ -177,7 +177,6 @@ void GatherSensorData()
 	stateData.deltaT = LastDeltaT();
 }
 
-
 void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet, float kpOffset, float kdOffset)
 {
 	GatherSensorData();
@@ -189,10 +188,13 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	errorPitch = pitchSet - stateData.pitch;	// error pitch is negative if quad will have to pitch in negative direction
 	errorYaw = yawSet - stateData.yaw;			// error yaw is negative if quad will have to yaw in negative direction
 
+#define UART_DEBUG
+#ifdef UART_DEBUG
 	char debugMessage[100];
+
 	snprintf(debugMessage, 100, "errorRoll = %f     errorPitch = %f     errorYaw = %f \r\n", errorRoll, errorPitch, errorYaw);
 	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
-
+#endif
 
 	/* LPF the error terms */
 	static float lpfErrorRoll=0.0, lpfErrorPitch=0.0, lpfErrorRollOLD = 0.0, lpfErrorPitchOLD = 0.0;
@@ -215,14 +217,16 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
 	rollCmd = (kp + kpOffset) * errorRoll + (kd + kdOffset) * derivativeRoll; // negative roll command means roll in negative direction
 	pitchCmd = (kp + kpOffset) * errorPitch + (kd + kdOffset) * derivativePitch; // negative pitch command means pitch in negative direction
-	yawCmd = kp * errorYaw; // WAS:  "+ kd * derivativeYaw"	// negative yaw command means yaw in negative direction
+	yawCmd = (kp + kpOffset) * errorYaw; // WAS:  "+ (kd + kdoOffset) * derivativeYaw"	// negative yaw command means yaw in negative direction
 	yawCmd = 0.0; // TURN OFF YAW TEMPORARILY
 
+#ifdef UART_DEBUG
 	snprintf(debugMessage, 100, "kp = %f, kpOffset = %f     kd = %f, kdOffset = %f \r\n", kp, kpOffset, kd, kdOffset);
 	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
 
 	snprintf(debugMessage, 100, "rollCmd = %f     pitchCmd = %f \r\n", rollCmd, pitchCmd);
 	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
+#endif
 
 	mixPWM(throttleSet, rollCmd, pitchCmd, yawCmd);
 }
