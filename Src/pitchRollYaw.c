@@ -110,9 +110,10 @@ void CalculatePitchRollYaw(void)
 
 	/* Low pass filter acceleration */
 	static float lpfAx = 0.0, lpfAy = 0.0, lpfAz = 0.0;
-	lpfAx = 0.2 * accelX + (1 - 0.2) * lpfAx;
-	lpfAy = 0.2 * accelY + (1 - 0.2) * lpfAy;
-	lpfAz = 0.2 * accelZ + (1 - 0.2) * lpfAz;
+	static float beta = 0.05;
+	lpfAx = beta * accelX + (1 - beta) * lpfAx;
+	lpfAy = beta * accelY + (1 - beta) * lpfAy;
+	lpfAz = beta * accelZ + (1 - beta) * lpfAz;
 
 	/* Calculate roll and pitch from acceleration only */
 	float accelRollAngle = atan2f(-lpfAx, lpfAz);
@@ -123,9 +124,9 @@ void CalculatePitchRollYaw(void)
 
 
 	/* Complementary filter gyro calculations with acceleration calculations */
-	float alpha = 0.995;
-	pitchAngle = alpha * pitchAngle + (1-alpha) * accelPitchAngle;
+	static float alpha = 0.97;
 	rollAngle = alpha * rollAngle + (1-alpha) * accelRollAngle;
+	pitchAngle = alpha * pitchAngle + (1-alpha) * accelPitchAngle;
 
 
 	/* Transfer roll to pitch if quad is yaw-ing */
