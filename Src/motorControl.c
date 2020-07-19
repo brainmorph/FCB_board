@@ -190,7 +190,7 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	errorYaw = yawSet - stateData.yaw;			// error yaw is negative if quad will have to yaw in negative direction
 
 	char debugMessage[100];
-	snprintf(debugMessage, 100, "errorRoll = %f     errorPitch = %f     errorYaw = %f", errorRoll, errorPitch, errorYaw);
+	snprintf(debugMessage, 100, "errorRoll = %f     errorPitch = %f     errorYaw = %f \r\n", errorRoll, errorPitch, errorYaw);
 	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
 
 

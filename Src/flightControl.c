@@ -186,8 +186,8 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-//#define FLIGHT_PLATFORM
-#define GROUND_STATION
+#define FLIGHT_PLATFORM
+//#define GROUND_STATION
 	while(1)
     {
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
@@ -212,15 +212,6 @@ void FC_Flight_Loop(void)
 			telemetryData.roll = stateData.roll;
 			telemetryData.yaw = stateData.yaw;
 			telemetryData.deltaT = stateData.deltaT;
-
-			telemetryData.test1 = 1.0;
-			telemetryData.test2 = 2.0;
-			telemetryData.test3 = 3.0;
-			telemetryData.test4 = 4.0;
-			telemetryData.test5 = 5.0;
-			telemetryData.test6 = 6.0;
-			telemetryData.test7 = 7.0;
-			telemetryData.test8 = 8.0;
 
 			/* Send data */
 			if(FC_Transmit_32B(&telemetryData)) // transmit data without waiting for ACK
