@@ -229,7 +229,7 @@ void FC_Flight_Loop(void)
 			telemetryData.test8 = 8.0;
 
 			/* Send data */
-			if(FC_Transmit_Xbytes(&telemetryData, sizeof(RadioPacket_t))) // transmit data without waiting for ACK
+			if(FC_Transmit_32B(&telemetryData)) // transmit data without waiting for ACK
 			{
 #ifdef UART_DEBUG
 				HAL_UART_Transmit(&huart6, (uint8_t *)"Transmit success...\r\n",

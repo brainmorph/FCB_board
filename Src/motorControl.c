@@ -9,7 +9,10 @@
 #include "tim.h"
 #include "pitchRollyaw.h"
 #include "altitude.h"
-
+#include "logging.h"
+#include "usart.h"
+#include <stdio.h>
+#include <string.h>
 
 
 
@@ -174,6 +177,7 @@ void GatherSensorData()
 	stateData.deltaT = LastDeltaT();
 }
 
+
 void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet, float kpOffset, float kdOffset)
 {
 	GatherSensorData();
@@ -184,6 +188,10 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	errorRoll = rollSet - stateData.roll;		// error roll is negative if quad will have to roll in negative direction
 	errorPitch = pitchSet - stateData.pitch;	// error pitch is negative if quad will have to pitch in negative direction
 	errorYaw = yawSet - stateData.yaw;			// error yaw is negative if quad will have to yaw in negative direction
+
+	char debugMessage[100];
+	snprintf(debugMessage, 100, "errorRoll = %f     errorPitch = %f     errorYaw = %f", errorRoll, errorPitch, errorYaw);
+	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
 
 
 	/* LPF the error terms */
@@ -208,9 +216,8 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	rollCmd = (kp + kpOffset) * errorRoll + (kd + kdOffset) * derivativeRoll; // negative roll command means roll in negative direction
 	pitchCmd = (kp + kpOffset) * errorPitch + (kd = kdOffset) * derivativePitch; // negative pitch command means pitch in negative direction
 	yawCmd = kp * errorYaw; // WAS:  "+ kd * derivativeYaw"	// negative yaw command means yaw in negative direction
-
-
 	yawCmd = 0.0; // TURN OFF YAW TEMPORARILY
+
 	mixPWM(throttleSet, rollCmd, pitchCmd, yawCmd);
 }
 
