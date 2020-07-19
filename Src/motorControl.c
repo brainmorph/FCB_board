@@ -214,9 +214,15 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 	volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
 	rollCmd = (kp + kpOffset) * errorRoll + (kd + kdOffset) * derivativeRoll; // negative roll command means roll in negative direction
-	pitchCmd = (kp + kpOffset) * errorPitch + (kd = kdOffset) * derivativePitch; // negative pitch command means pitch in negative direction
+	pitchCmd = (kp + kpOffset) * errorPitch + (kd + kdOffset) * derivativePitch; // negative pitch command means pitch in negative direction
 	yawCmd = kp * errorYaw; // WAS:  "+ kd * derivativeYaw"	// negative yaw command means yaw in negative direction
 	yawCmd = 0.0; // TURN OFF YAW TEMPORARILY
+
+	snprintf(debugMessage, 100, "kp = %f, kpOffset = %f     kd = %f, kdOffset = %f \r\n", kp, kpOffset, kd, kdOffset);
+	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
+
+	snprintf(debugMessage, 100, "rollCmd = %f     pitchCmd = %f \r\n", rollCmd, pitchCmd);
+	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
 
 	mixPWM(throttleSet, rollCmd, pitchCmd, yawCmd);
 }
