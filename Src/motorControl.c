@@ -216,8 +216,8 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 
 
-	static float kp = 0.2;
-	static float kd = 0.0;
+	static float kp = 0.8;
+	static float kd = 0.04;
 
 	volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
 	rollCmd = (kp + kpOffset) * errorRoll + (kd + kdOffset) * derivativeRoll; // negative roll command means roll in negative direction
