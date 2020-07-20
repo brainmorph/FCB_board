@@ -7,11 +7,11 @@
 #endif
 
 
- // Increase the total system error count
- void log_incrementErrorCount();
+// Increase the total system error count
+void log_incrementErrorCount();
 
- // Return the total system errors encountered so far
- int log_totalErrorCount();
+// Return the total system errors encountered so far
+int log_totalErrorCount();
 
 
 #endif /* LOGGING_H_ */

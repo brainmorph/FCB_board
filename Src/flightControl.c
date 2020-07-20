@@ -26,7 +26,7 @@
 /* Private Variables */
 static uint32_t MainFlightLoopTimer = 0;
 
-typedef struct RadioPacket_t
+typedef struct RadioPacket_t // this packet MUST BE 32 bytes in size
 {
 	uint32_t count; // 4 bytes
 	float altitude; // 4 bytes
@@ -38,12 +38,31 @@ typedef struct RadioPacket_t
 	float deltaT;	// 4 bytes
 
 	/* Fill in the rest of the struct to make it be 32 bytes in total */
-	uint32_t garbage5; // 4 bytes
-	uint32_t garbage6; // 4 bytes
+	float garbage1; // 4 bytes
+	float garbage2; // 4 bytes
 }RadioPacket_t; // this packet MUST BE 32 bytes in size
 
-RadioPacket_t telemetryData = {0, 0.0, 0.0, 0.0, 0.0};
-RadioPacket_t groundData = {0, 0.0f};
+RadioPacket_t telemetryData = {0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+
+typedef struct CommandPacket_t // this packet MUST BE 32 bytes in size
+{
+	uint32_t count;		// 4 bytes
+	float key;  // 4 bytes
+
+	float throttleSet;  // 4 bytes
+	float rollSet;		// 4 bytes
+	float pitchSet;		// 4 bytes
+	float yawSet;		// 4 bytes
+
+	float kpOffset;	// 4 bytes
+	float kdOffset; 	// 4 bytes
+
+}CommandPacket_t; // this packet MUST BE 32 bytes in size
+
+CommandPacket_t commandData = {0, (float)3.14, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+
 
 typedef struct
 {
@@ -62,6 +81,47 @@ char myRxData[50];
 
 void FC_Init(void)
 {
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
+
+
+	/* Program ESC */
+//#define PROGRAM_ESC
+
+#ifdef PROGRAM_ESC
+	int max = 4000; // 80MHz with pre-scalar 40 and counter period 40,000
+	int min = 2000; // 80MHz with pre-scalar 40 and counter period 40,000
+
+	int range = max - min;
+
+	// set all PWM to max setting while ESCs come online
+	int setting = (100.0/100.0) * (float)range; // take a percentage out of max allowable range
+	setting += min; // add new value to minimum setting
+
+	htim2.Instance->CCR1 = setting;
+	htim2.Instance->CCR2 = setting;
+	htim2.Instance->CCR3 = setting;
+	htim2.Instance->CCR4 = setting;
+
+	// wait for ESC beep
+	HAL_Delay(7000);
+
+
+	// set all PWM to minimum setting
+	setting = min;
+
+	htim2.Instance->CCR1 = setting;
+	htim2.Instance->CCR2 = setting;
+	htim2.Instance->CCR3 = setting;
+	htim2.Instance->CCR4 = setting;
+#endif
+	/* End of ESC init */
+
+
+	//HAL_TIM_Base_Start_IT(&htim6); //Start the timer interrupt
+
 	BMFC_BME280_Init(); // Initialize the BME280 sensor
 
 	NRF24_begin(GPIOB, SPI1_CS_Pin, SPI1_CE_Pin, hspi1);
@@ -93,31 +153,36 @@ void FC_Init(void)
 	CollectInitalSensorValues();
 
 
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
-	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
+
 }
 
-
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	// This callback is automatically called by the HAL on the UEV event
+	if(htim->Instance == TIM6)
+	{
+		HAL_GPIO_TogglePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin);
+	}
+}
 
 
 /* Toggles LED based on state of I2C comms with BME280 AND based on any errors */
 void Check_Error_Status() {
 	if (BMFC_BME280_ConfirmI2C_Comms() == 0)    // check for BME280 comm. issues
-			{
-		HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1); // turn on LED
+	{
+		HAL_TIM_Base_Stop_IT(&htim6); // stop the timer interrupt
+		HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 1); // turn on LED
 	} else {
-		HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 0); // turn off LED
+		HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 0); // turn off LED
 	}
 	if (log_totalErrorCount() != 0) // check for any error occurances
 			{
-		HAL_GPIO_WritePin(GPIOB, BME280_STATUS_LED_Pin, 1); // turn on LED
+		HAL_TIM_Base_Stop_IT(&htim6); // stop the timer interrupt
+		HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, 1); // turn on LED
 	}
 }
 
-
-
+//#define UART_DEBUG
+extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
@@ -130,26 +195,25 @@ void FC_Flight_Loop(void)
 #ifdef FLIGHT_PLATFORM
 		Check_Error_Status(); // toggle LED based on any error detection
 
-		/* Gather all relevant sensor data */
-		CalculatePitchRollYaw();
 
-		telemetryData.altitude = CurrentAltitude();
-		telemetryData.pitch = CurrentPitchAngle(); // from -180 to 180
-		telemetryData.roll = CurrentRollAngle(); // from -180 to 180
-		telemetryData.yaw = CurrentYawAngle(); // from -180 to 180
-		telemetryData.deltaT = LastDeltaT();
-//		telemetryData.longitude = currentLongitude();
-//		telemetryData.latitude = currentLatitude();
-//		telemetryData.motorPmwFL = ??; // Front Left
-//		telemetryData.motorPwmFR = ??; // Front Right
-//		telemetryData.motorPwmBL = ??; // Back Left
-//		telemetryData.motorPwmBR = ??; // Back right
+		if((log_totalErrorCount() == 0) && (fcLoopCount % 250 == 0)) // blip the status LED every so often
+		{
+			HAL_GPIO_TogglePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin);
+		}
 
 
 		/* Transmit RF every Nth loop cycle */
 		fcLoopCount++;
 		if(fcLoopCount % 10 == 0)
 		{
+			/* Load up the data to send */
+			telemetryData.altitude = stateData.altitude;
+			telemetryData.pitch = stateData.pitch;
+			telemetryData.roll = stateData.roll;
+			telemetryData.yaw = stateData.yaw;
+			telemetryData.deltaT = stateData.deltaT;
+
+			/* Send data */
 			if(FC_Transmit_32B(&telemetryData)) // transmit data without waiting for ACK
 			{
 #ifdef UART_DEBUG
@@ -168,39 +232,80 @@ void FC_Flight_Loop(void)
 
 
 		NRF24_startListening();
+		HAL_Delay(1);
 
-		//HAL_Delay(2);
 
-
+		static volatile uint32_t receivedCount = 0;
+		static volatile float receivedThrottle = 0.0;
+		static volatile float receivedRoll = 0.0;
+		static volatile float receivedPitch = 0.0;
+		static volatile float receivedYaw = 0.0;
+		static volatile float receivedKpOffset = 0.0;
+		static volatile float receivedKdOffset = 0.0;
 		if(NRF24_available())
 		{
+			static float nrfAfailableCount = 0.0;
+			nrfAfailableCount += 1.0;
+
 #ifdef UART_DEBUG
 			HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n", 
 				strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
 #endif // UART_DEBUG
 
-			NRF24_read(&groundData, sizeof(groundData)); // remember that NRF radio can at most transmit 32 bytes
+			NRF24_read(&commandData, sizeof(commandData)); // remember that NRF radio can at most transmit 32 bytes
 
-			//receivedAltitude = *(float *)myRxData; // handle myRxData as a 4 byte float and read the value from it
-			volatile float receivedAltitude = groundData.altitude;
+			if((float)commandData.key != (float)3.14)
+			{
+				continue;
+			}
 
-			altimeter.preDecimal = (int) receivedAltitude;
-			altimeter.postDecimal = (int)((receivedAltitude - altimeter.preDecimal) * 100);
+			receivedCount = commandData.count;
+
+
+			/* Constrain allowable throttle settings */
+			if((commandData.throttleSet >= 0.0) && (commandData.throttleSet < 100.0))
+				receivedThrottle = commandData.throttleSet;
+
+			/* Constrain allowable angle settings */
+			float cappedAngle = 40.0; // only allow angle settings between -40 < x < 40
+			if((commandData.rollSet >= -cappedAngle) && (commandData.rollSet < cappedAngle))
+				receivedRoll = commandData.rollSet;
+			if((commandData.pitchSet >= -cappedAngle) && (commandData.pitchSet < cappedAngle))
+				receivedPitch = commandData.pitchSet;
+			if((commandData.yawSet >= -cappedAngle) && (commandData.yawSet < cappedAngle))
+				receivedYaw = commandData.yawSet;
+
+			if((commandData.kpOffset >= -2.0) && (commandData.kpOffset <= 2.0))
+				receivedKpOffset = commandData.kpOffset;
+			if((commandData.kdOffset >= -2.0) && (commandData.kdOffset <= 2.0))
+				receivedKdOffset = commandData.kdOffset;
+
+			/* Check for dropped packets */
+			static uint32_t oldCount = 0;
+			static uint32_t droppedPacket = 0;
+			if(++oldCount != receivedCount)
+			{
+				droppedPacket++;
+				oldCount = receivedCount;
+			}
+			volatile int lostPacketRatio = (int)(((float)droppedPacket/(float)nrfAfailableCount) * 100.0);
+			lostPacketRatio = lostPacketRatio;
+
 
 #ifdef UART_DEBUG
-			snprintf(myRxData, 32, "Gnd packets %lu \r\n", groundData.count);
+			snprintf(myRxData, 32, "Gnd packets %lu \r\n", commandData.count);
 			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
 
 			static int packetsLost = 0;
 			static int lastGroundCount = 0;
-			if(groundData.count - (lastGroundCount+1) != 0) // if packets have been dropped
+			if(commandData.count - (lastGroundCount+1) != 0) // if packets have been dropped
 			{
-				packetsLost += (groundData.count - (lastGroundCount+1));
+				packetsLost += (commandData.count - (lastGroundCount+1));
 			}
 			snprintf(myRxData, 32, "Packets lost = %d \r\n", packetsLost);
 			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
 
-			lastGroundCount = groundData.count;
+			lastGroundCount = commandData.count;
 #endif // UART_DEBUG
 
 		} // if(NRF24_available())
@@ -208,49 +313,10 @@ void FC_Flight_Loop(void)
 		//HAL_Delay(2);
 
 
-
-
-
 		/* >>> BY THIS POINT ALL ORIENTATION ANGLES SHOULD BE FULLY COMPUTED <<< */
 
+		CalculatePID(receivedThrottle, receivedRoll, receivedPitch, receivedYaw, receivedKpOffset, receivedKdOffset);
 
-
-		/* Calculate PID error terms */
-		static float errorRoll, errorPitch, errorYaw;
-		static float rollSet = 0.0;
-		static float pitchSet = 0.0;
-		static float yawSet = 0.0;
-		errorRoll = rollSet - telemetryData.roll;		// error roll is negative if quad will have to roll in negative direction
-		errorPitch = pitchSet - telemetryData.pitch;	// error pitch is negative if quad will have to pitch in negative direction
-		errorYaw = yawSet - telemetryData.yaw;			// error yaw is negative if quad will have to yaw in negative direction
-
-
-		/* LPF the error terms */
-		static float lpfErrorRoll=0.0, lpfErrorPitch=0.0, lpfErrorRollOLD = 0.0, lpfErrorPitchOLD = 0.0;
-		lpfErrorRoll = 0.9 * lpfErrorRoll + (1 - 0.9) * errorRoll;
-		lpfErrorPitch = 0.9 * lpfErrorPitch + (1 - 0.9) * errorPitch;
-
-
-		/* Calculate derivative of error terms */
-		float derivativeRoll = (lpfErrorRoll - lpfErrorRollOLD) / telemetryData.deltaT; // take derivative of lpf signal
-		float derivativePitch = (lpfErrorPitch - lpfErrorPitchOLD) / telemetryData.deltaT; // take derivative of lpf signal
-
-		lpfErrorRollOLD = lpfErrorRoll; // update last measurement
-		lpfErrorPitchOLD = lpfErrorPitch; // update last measurement
-
-
-
-		static float kp = 2.0;
-		static float kd = 0.02;
-
-		volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
-		rollCmd = kp * errorRoll + kd * derivativeRoll; // negative roll command means roll in negative direction
-		pitchCmd = kp * errorPitch + kd * derivativePitch; // negative pitch command means pitch in negative direction
-		yawCmd = kp * errorYaw; // WAS:  "+ kd * derivativeYaw"	// negative yaw command means yaw in negative direction
-
-
-		yawCmd = 0.0;
-		mixPWM(0.0, rollCmd, pitchCmd, yawCmd);
 
 
 #endif // FLIGHT_PLATFORM
@@ -261,43 +327,56 @@ void FC_Flight_Loop(void)
 		fcLoopCount++;
 		if(fcLoopCount % 10 == 0) // only transmit RF messages every Nth loop cycle
 		{
-			if(FC_Transmit_32B(&groundData)) // transmit data without waiting for ACK
+			if(FC_Transmit_32B(&commandData)) // transmit data without waiting for ACK
 			{
 #ifdef UART_DEBUG
-				HAL_UART_Transmit(&huart6, (uint8_t *)"Transmit success...\r\n",
-					strlen("Transmit success...\r\n"), 10); // print success with 10 ms timeout
+//				HAL_UART_Transmit(&huart6, (uint8_t *)"Transmit success...\r\n",
+//					strlen("Transmit success...\r\n"), 10); // print success with 10 ms timeout
 
-				snprintf(myTxData, 32, "Sent packet # %lu\r\n",
-						groundData.count);
-				HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
-						strlen(myTxData), 10); // 10 ms timeout
+//				snprintf(myTxData, 32, "Sent packet # %lu\r\n",
+//						commandData.count);
+//				HAL_UART_Transmit(&huart6, (uint8_t *)myTxData,
+//						strlen(myTxData), 10); // 10 ms timeout
 #endif
-				groundData.count++;
+				commandData.count++;
 			}
 		}
 
 		NRF24_startListening();
-
-		HAL_Delay(2);
+		HAL_Delay(1);
 
 		if(NRF24_available())
 		{
+			static float nrfAfailableCount = 0.0;
+			nrfAfailableCount += 1.0;
+
 #ifdef UART_DEBUG
-			HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n",
-				strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
+//			HAL_UART_Transmit(&huart6, (uint8_t *)"Radio data available...\r\n",
+//				strlen("Radio data available...\r\n"), 10); // print success with 10 ms timeout
 #endif // UART_DEBUG
 
 			NRF24_read(&telemetryData, sizeof(telemetryData)); // remember that NRF radio can at most transmit 32 bytes
 
+			/* Throw away error packets that come in as repeated values */
+			if(telemetryData.altitude == telemetryData.pitch)
+			{
+				continue;
+			}
+
+
+
+#define UART_DEBUG
+#ifdef UART_DEBUG
 			//receivedAltitude = *(float *)myRxData; // handle myRxData as a 4 byte float and read the value from it
 			volatile float receivedAltitude = telemetryData.altitude;
+			volatile float receivedRoll = telemetryData.roll;
+			volatile float receivedPitch = telemetryData.pitch;
+			volatile float receivedYaw = telemetryData.yaw;
 
-			altimeter.preDecimal = (int) receivedAltitude;
-			altimeter.postDecimal = (int)((receivedAltitude - altimeter.preDecimal) * 100);
-			snprintf(myRxData, 32, "%u alt: %d.%d \r\n", (uint8_t)telemetryData.count, altimeter.preDecimal, altimeter.postDecimal);
 
-#ifdef UART_DEBUG
-			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
+			snprintf(myRxData, 128, "%li alt: %f     roll: %f     pitch: %f     yaw: %f \r\n",
+					telemetryData.count, receivedAltitude, receivedRoll, receivedPitch, receivedYaw);
+			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print with 10 ms timeout
 
 			static int packetsLost = 0;
 			static int lastCount = 0;
@@ -305,13 +384,131 @@ void FC_Flight_Loop(void)
 			{
 				packetsLost += (telemetryData.count - (lastCount+1));
 			}
-			snprintf(myRxData, 32, "Packets lost = %d \r\n", packetsLost);
+
+
+			volatile int lostPacketRatio = (int)(((float)packetsLost/(float)nrfAfailableCount) * 100.0);
+			snprintf(myRxData, 64, "Packets lost = %d.  Lost packet ratio = %d %% \r\n", packetsLost, lostPacketRatio);
 			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
 
 			lastCount = telemetryData.count;
 #endif // UART_DEBUG
+#undef UART_DEBUG
 
 		} // if(NRF24_available())
+
+
+		// RX code----------------------------
+		uint8_t uartReceive[2] = {0};
+		uint8_t uartTransmit[25] = {0};
+		HAL_UART_Receive(&huart6, uartReceive, 1, 1);
+//		if(uartReceive[0] != 0) // for debugging
+//		{
+//			volatile int dummy = 1;
+//			dummy = dummy;
+//		}
+		if(uartReceive[0] == 'i')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			//kp += 0.01;
+			commandData.kpOffset += 0.01;
+
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kp Offset:%f\r\n", (float)commandData.kpOffset);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
+		}
+		if(uartReceive[0] == 'k')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			//kp -= 0.01;
+			commandData.kpOffset -= 0.01;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kp Offset:%f\r\n", (float)commandData.kpOffset);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
+		}
+		if(uartReceive[0] == 'u')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			//kd += 0.001;
+			commandData.kdOffset += 0.001;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kd Offset:%f\r\n", (float)commandData.kdOffset);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
+		}
+		if(uartReceive[0] == 'j')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			//kd -= 0.001;
+			commandData.kdOffset -= 0.001;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kd Offset:%f\r\n", (float)commandData.kdOffset);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
+		}
+		if(uartReceive[0] == 'w')
+		{
+			commandData.pitchSet += 3.0;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "pitch:%f\r\n", (float)commandData.pitchSet);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
+		}
+		if(uartReceive[0] == 's')
+		{
+			commandData.pitchSet -= 3.0;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "pitch:%f\r\n", commandData.pitchSet);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
+		}
+		if(uartReceive[0] == 'a')
+		{
+			commandData.rollSet -= 3.0;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "roll:%f\r\n", commandData.rollSet);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
+		}
+		if(uartReceive[0] == 'd')
+		{
+			commandData.rollSet += 3.0;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "roll:%f\r\n", commandData.rollSet);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
+		}
+		if(uartReceive[0] == 'q')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.yawSet -= 3.0;
+		}
+		if(uartReceive[0] == 'e')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.yawSet += 3.0;
+		}
+		if(uartReceive[0] == '0' || uartReceive[0] == '`') // emergency shutoff.  reset all values
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.throttleSet = 0.0;
+			commandData.rollSet = 0.0;
+			commandData.pitchSet = 0.0;
+			commandData.yawSet = 0.0;
+
+			commandData.kpOffset = 0.0;
+			commandData.kdOffset = 0.0;
+//			commandData.emergencyOff = 1.0;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Emergency off\r\n");
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
+		}
+		if(uartReceive[0] == '1')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.throttleSet += 1.0;
+		}
+		if(uartReceive[0] == '2')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.throttleSet -= 3.0;
+		}
+		if(uartReceive[0] == '5')
+		{
+			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.throttleSet = 0.0;
+		}
+
+//		if(uartReceive[0] == '$')
+//		{
+//			rxWatchdogFlag = 1;
+//		}
+
+		// RX code end------------------------------------
 
 #endif // GROUND_STATION
 

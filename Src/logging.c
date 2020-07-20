@@ -6,6 +6,7 @@
  */
 
 #include "logging.h"
+#include "usart.h"
 
 static int systemErrorCount = 0;
 
@@ -20,3 +21,4 @@ int log_totalErrorCount()
 {
 	return systemErrorCount;
 }
+

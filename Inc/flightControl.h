@@ -11,7 +11,6 @@
 
 #include "stdint.h"
 
-//#define UART_DEBUG
 
 void FC_Init(void);
 void FC_Flight_Loop(void);

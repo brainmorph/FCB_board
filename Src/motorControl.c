@@ -7,6 +7,16 @@
 
 #include "motorControl.h"
 #include "tim.h"
+#include "pitchRollyaw.h"
+#include "altitude.h"
+#include "logging.h"
+#include "usart.h"
+#include <stdio.h>
+#include <string.h>
+
+
+
+StateData_t stateData = {0, 0.0, 0.0, 0.0, 0.0};
 
 
 void mixPWM(float thrust, float roll, float pitch, float yaw)
@@ -21,23 +31,82 @@ void mixPWM(float thrust, float roll, float pitch, float yaw)
 	float BR = thrust + yaw - pitch - roll;
 	float BL = thrust - yaw - pitch + roll;
 
-	setPWM(FL, FR, BR, BL);
+	static int arm = 0;
+	if(thrust > 0.0)
+	{
+		arm = 1;
+	}
+	else
+	{
+		arm = 0;
+	}
+
+	setPWM(arm, FL, FR, BR, BL);
 }
+
+//static void changePWMincrementally(float* motorID, float* motorIDsetting)
+//{
+//	int stepSize = 5;
+//	if(*motorID > *motorIDsetting)
+//	{
+//		if(*motorID - *motorIDsetting > stepSize)
+//		{
+//			*motorIDsetting += 1;
+//		}
+//		else
+//		{
+//			*motorIDsetting += stepSize;
+//		}
+//	}
+//	else if(*motorID < *motorIDsetting)
+//	{
+//		if(*motorIDsetting - *motorID > stepSize)
+//		{
+//			*motorIDsetting -= 1;
+//		}
+//		else
+//		{
+//			*motorIDsetting -= stepSize;
+//		}
+//	}
+//}
 
 // each setting represents motor throttle from 0 to 100%
 float motor1Setting=0.0, motor2Setting=0.0, motor3Setting=0.0, motor4Setting=0.0;
-void setPWM(float motor1, float motor2, float motor3, float motor4)
+void setPWM(int arm, float motor1, float motor2, float motor3, float motor4)
 {
 
+	float motorMin = 12.0;
+
 	/* Clip min motor output */
-	if(motor1 < 5)
-		motor1 = 0;
-	if(motor2 < 5)
-		motor2 = 0;
-	if(motor3 < 5)
-		motor3 = 0;
-	if(motor4 < 5)
-		motor4 = 0;
+	if(motor1 < motorMin)
+		motor1 = 0.0;
+	if(motor2 < motorMin)
+		motor2 = 0.0;
+	if(motor3 < motorMin)
+		motor3 = 0.0;
+	if(motor4 < motorMin)
+		motor4 = 0.0;
+
+//	/* Prevent motors from turning completely off if quad is armed */
+//	if(arm != 0)
+//	{
+//		if(motor1 < motorMin)
+//			motor1 = motorMin;
+//		if(motor2 < motorMin)
+//			motor2 = motorMin;
+//		if(motor3 < motorMin)
+//			motor3 = motorMin;
+//		if(motor4 < motorMin)
+//			motor4 = motorMin;
+//	}
+//	else // if quad is un-armed, turn off all props
+//	{
+//		motor1 = 0;
+//		motor2 = 0;
+//		motor3 = 0;
+//		motor4 = 0;
+//	}
 
 	/* Clip max motor output */
 	float motorMax = 60;
@@ -50,24 +119,16 @@ void setPWM(float motor1, float motor2, float motor3, float motor4)
 	if(motor4 > motorMax)
 		motor4 = motorMax;
 
-	// transition speed one step at a time
-	if(motor1 > motor1Setting)
-		motor1Setting += 1;
-	if(motor2 > motor2Setting)
-		motor2Setting += 1;
-	if(motor3 > motor3Setting)
-		motor3Setting += 1;
-	if(motor4 > motor4Setting)
-		motor4Setting += 1;
+	// transition PWM incrementally
+//	changePWMincrementally(&motor1, &motor1Setting);
+//	changePWMincrementally(&motor2, &motor2Setting);
+//	changePWMincrementally(&motor3, &motor3Setting);
+//	changePWMincrementally(&motor4, &motor4Setting);
 
-	if(motor1 < motor1Setting)
-		motor1Setting -= 1;
-	if(motor2 < motor2Setting)
-		motor2Setting -= 1;
-	if(motor3 < motor3Setting)
-		motor3Setting -= 1;
-	if(motor4 < motor4Setting)
-		motor4Setting -= 1;
+	motor1Setting = motor1;
+	motor2Setting = motor2;
+	motor3Setting = motor3;
+	motor4Setting = motor4;
 
 
 	// TODO: update min and max values to match new timer settings (I want higher resolution control)
@@ -104,5 +165,74 @@ void setPWM(float motor1, float motor2, float motor3, float motor4)
 //		snprintf(uartData, sizeof(uartData), "[%02.2f, %02.2f, %02.2f, %02.2f]   ",
 //				motor1, motor2, motor3, motor4);
 //		HAL_UART_Transmit(&huart4, uartData, 100, 5);
+}
+
+
+
+
+void GatherSensorData()
+{
+	/* Gather all relevant sensor data */
+	CalculatePitchRollYaw();
+
+	stateData.altitude = CurrentAltitude();
+	stateData.pitch = CurrentPitchAngle(); // from -180 to 180
+	stateData.roll = CurrentRollAngle(); // from -180 to 180
+	stateData.yaw = CurrentYawAngle(); // from -180 to 180
+	stateData.deltaT = LastDeltaT();
+}
+
+void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet, float kpOffset, float kdOffset)
+{
+	GatherSensorData();
+
+
+	/* Calculate PID error terms */
+	static float errorRoll, errorPitch, errorYaw;
+	errorRoll = rollSet - stateData.roll;		// error roll is negative if quad will have to roll in negative direction
+	errorPitch = pitchSet - stateData.pitch;	// error pitch is negative if quad will have to pitch in negative direction
+	errorYaw = yawSet - stateData.yaw;			// error yaw is negative if quad will have to yaw in negative direction
+
+//#define UART_DEBUG
+#ifdef UART_DEBUG
+	char debugMessage[100];
+
+	snprintf(debugMessage, 100, "errorRoll = %f     errorPitch = %f     errorYaw = %f     ", errorRoll, errorPitch, errorYaw);
+	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
+#endif
+
+	/* LPF the error terms */
+	static float lpfErrorRoll=0.0, lpfErrorPitch=0.0, lpfErrorRollOLD = 0.0, lpfErrorPitchOLD = 0.0;
+	lpfErrorRoll = 0.3 * lpfErrorRoll + (1 - 0.3) * errorRoll;
+	lpfErrorPitch = 0.3 * lpfErrorPitch + (1 - 0.3) * errorPitch;
+
+
+	/* Calculate derivative of error terms */
+	float derivativeRoll = (lpfErrorRoll - lpfErrorRollOLD) / stateData.deltaT; // take derivative of lpf signal
+	float derivativePitch = (lpfErrorPitch - lpfErrorPitchOLD) / stateData.deltaT; // take derivative of lpf signal
+
+	lpfErrorRollOLD = lpfErrorRoll; // update last measurement
+	lpfErrorPitchOLD = lpfErrorPitch; // update last measurement
+
+
+
+	static float kp = 0.2;
+	static float kd = 0.0;
+
+	volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
+	rollCmd = (kp + kpOffset) * errorRoll + (kd + kdOffset) * derivativeRoll; // negative roll command means roll in negative direction
+	pitchCmd = (kp + kpOffset) * errorPitch + (kd + kdOffset) * derivativePitch; // negative pitch command means pitch in negative direction
+	yawCmd = (kp + kpOffset) * errorYaw; // WAS:  "+ (kd + kdoOffset) * derivativeYaw"	// negative yaw command means yaw in negative direction
+	yawCmd = 0.0; // TURN OFF YAW TEMPORARILY
+
+#ifdef UART_DEBUG
+	snprintf(debugMessage, 100, "kp = %f, kpOffset = %f     kd = %f, kdOffset = %f     ", kp, kpOffset, kd, kdOffset);
+	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
+
+	snprintf(debugMessage, 100, "rollCmd = %f     pitchCmd = %f \r\n", rollCmd, pitchCmd);
+	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
+#endif
+
+	mixPWM(throttleSet, rollCmd, pitchCmd, yawCmd);
 }
 
