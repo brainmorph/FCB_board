@@ -374,8 +374,8 @@ void FC_Flight_Loop(void)
 			volatile float receivedYaw = telemetryData.yaw;
 
 
-			snprintf(myRxData, 128, "%li alt: %f     roll: %f     pitch: %f     yaw: %f \r\n",
-					telemetryData.count, receivedAltitude, receivedRoll, receivedPitch, receivedYaw);
+			snprintf(myRxData, 128, "%u alt: %f     roll: %f     pitch: %f     yaw: %f \r\n",
+					(uint32)telemetryData.count, receivedAltitude, receivedRoll, receivedPitch, receivedYaw);
 			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print with 10 ms timeout
 
 			static int packetsLost = 0;
