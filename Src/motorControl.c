@@ -193,7 +193,7 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	errorPitch = pitchSet - stateData.pitch;	// error pitch is negative if quad will have to pitch in negative direction
 	errorYaw = yawSet - stateData.yaw;			// error yaw is negative if quad will have to yaw in negative direction
 
-#define UART_DEBUG
+//#define UART_DEBUG
 #ifdef UART_DEBUG
 	char debugMessage[100];
 
