@@ -188,6 +188,8 @@ void FC_Flight_Loop(void)
 {
 //#define FLIGHT_PLATFORM
 #define GROUND_STATION
+	NRF24_startListening();
+	HAL_Delay(1);
 	while(1)
     {
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
@@ -204,8 +206,10 @@ void FC_Flight_Loop(void)
 
 		/* Transmit RF every Nth loop cycle */
 		fcLoopCount++;
-		if(fcLoopCount % 10 == 0)
+		if(fcLoopCount % 20 == 0)
 		{
+			NRF24_stopListening(); // some delay is needed after this before TX
+
 			/* Load up the data to send */
 			telemetryData.altitude = stateData.altitude;
 			telemetryData.pitch = stateData.pitch;
@@ -228,11 +232,12 @@ void FC_Flight_Loop(void)
 
 				telemetryData.count++; // increment packet number
 			}
+
+			NRF24_startListening();
+			HAL_Delay(1);
 		}
 
 
-		NRF24_startListening();
-		HAL_Delay(1);
 
 
 		static volatile uint32_t receivedCount = 0;
@@ -325,8 +330,11 @@ void FC_Flight_Loop(void)
 #ifdef GROUND_STATION
 
 		fcLoopCount++;
-		if(fcLoopCount % 10 == 0) // only transmit RF messages every Nth loop cycle
+		if(fcLoopCount % 40 == 0) // only transmit RF messages every Nth loop cycle
 		{
+			NRF24_stopListening(); // some delay is needed after this before TX
+			HAL_Delay(1);
+
 			if(FC_Transmit_32B(&commandData)) // transmit data without waiting for ACK
 			{
 #ifdef UART_DEBUG
@@ -340,10 +348,10 @@ void FC_Flight_Loop(void)
 #endif
 				commandData.count++;
 			}
+			NRF24_startListening();
+			HAL_Delay(1);
 		}
 
-		NRF24_startListening();
-		HAL_Delay(1);
 
 		if(NRF24_available())
 		{
@@ -515,7 +523,7 @@ void FC_Flight_Loop(void)
 
 		// Timer test
 		volatile uint32_t period = Elapsed_Ms_Since_Timer_Start(&MainFlightLoopTimer);
-		if(period < 1)
+		if(period < 1) // don't allow less than 1 ms to prevent division by 0
 			period = 1;
 		volatile float frequency = 1 / (period / 1000.0);
 		frequency = frequency;
