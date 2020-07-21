@@ -186,8 +186,8 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-#define FLIGHT_PLATFORM
-//#define GROUND_STATION
+//#define FLIGHT_PLATFORM
+#define GROUND_STATION
 	while(1)
     {
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
@@ -374,8 +374,8 @@ void FC_Flight_Loop(void)
 			volatile float receivedYaw = telemetryData.yaw;
 
 
-			snprintf(myRxData, 128, "%u alt: %f     roll: %f     pitch: %f     yaw: %f \r\n",
-					(uint32)telemetryData.count, receivedAltitude, receivedRoll, receivedPitch, receivedYaw);
+			snprintf(myRxData, 128, "%lu alt: %f     roll: %f     pitch: %f     yaw: %f \r\n",
+					(uint32_t)telemetryData.count, receivedAltitude, receivedRoll, receivedPitch, receivedYaw);
 			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print with 10 ms timeout
 
 			static int packetsLost = 0;
@@ -441,13 +441,13 @@ void FC_Flight_Loop(void)
 		}
 		if(uartReceive[0] == 'w')
 		{
-			commandData.pitchSet += 3.0;
+			commandData.pitchSet -= 3.0;
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "pitch:%f\r\n", (float)commandData.pitchSet);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 's')
 		{
-			commandData.pitchSet -= 3.0;
+			commandData.pitchSet += 3.0;
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "pitch:%f\r\n", commandData.pitchSet);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
