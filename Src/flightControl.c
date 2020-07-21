@@ -474,12 +474,12 @@ void FC_Flight_Loop(void)
 		if(uartReceive[0] == 'q')
 		{
 			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
-			commandData.yawSet -= 3.0;
+			commandData.yawSet += 3.0;
 		}
 		if(uartReceive[0] == 'e')
 		{
 			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
-			commandData.yawSet += 3.0;
+			commandData.yawSet -= 3.0;
 		}
 		if(uartReceive[0] == '0' || uartReceive[0] == '`') // emergency shutoff.  reset all values
 		{
