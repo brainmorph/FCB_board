@@ -193,7 +193,7 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	errorPitch = pitchSet - stateData.pitch;	// error pitch is negative if quad will have to pitch in negative direction
 	errorYaw = yawSet - stateData.yaw;			// error yaw is negative if quad will have to yaw in negative direction
 
-//#define UART_DEBUG
+#define UART_DEBUG
 #ifdef UART_DEBUG
 	char debugMessage[100];
 
@@ -203,9 +203,9 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 	/* LPF the error terms */
 	static float lpfErrorRoll=0.0, lpfErrorPitch=0.0, lpfErrorRollOLD = 0.0, lpfErrorPitchOLD = 0.0;
-	lpfErrorRoll = 0.3 * lpfErrorRoll + (1 - 0.3) * errorRoll;
-	lpfErrorPitch = 0.3 * lpfErrorPitch + (1 - 0.3) * errorPitch;
-
+	static float gamma = 0.5;
+	lpfErrorRoll = gamma * lpfErrorRoll + (1 - gamma) * errorRoll;
+	lpfErrorPitch = gamma * lpfErrorPitch + (1 - gamma) * errorPitch;
 
 	/* Calculate derivative of error terms */
 	float derivativeRollError = (lpfErrorRoll - lpfErrorRollOLD) / stateData.deltaT; // take derivative of lpf signal
@@ -214,9 +214,14 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	lpfErrorRollOLD = lpfErrorRoll; // update last measurement
 	lpfErrorPitchOLD = lpfErrorPitch; // update last measurement
 
+#ifdef UART_DEBUG
+	snprintf(debugMessage, 100, "derivativeRoll= %f     derivativePitch = %f\r\n", derivativeRollError, derivativePitchError);
+	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
+#endif
 
 
-	static float kp = 0.5;
+
+	static float kp = 0.2;
 	static float kd = 0.06;
 
 	/* Add offset from radio commands */
@@ -236,9 +241,10 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	yawCmd = totalKp * errorYaw; // WAS:  "+ (kd + kdoOffset) * derivativeYaw"	// negative yaw command means yaw in negative direction
 	//yawCmd = 0.0; // TURN OFF YAW TEMPORARILY
 
+
 #ifdef UART_DEBUG
-	snprintf(debugMessage, 100, "kp = %f, kpOffset = %f     kd = %f, kdOffset = %f     ", kp, kpOffset, kd, kdOffset);
-	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
+//	snprintf(debugMessage, 100, "kp = %f, kpOffset = %f     kd = %f, kdOffset = %f     ", kp, kpOffset, kd, kdOffset);
+//	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
 
 	snprintf(debugMessage, 100, "rollCmd = %f     pitchCmd = %f \r\n", rollCmd, pitchCmd);
 	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
