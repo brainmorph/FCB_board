@@ -208,8 +208,8 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 
 	/* Calculate derivative of error terms */
-	float derivativeRoll = (lpfErrorRoll - lpfErrorRollOLD) / stateData.deltaT; // take derivative of lpf signal
-	float derivativePitch = (lpfErrorPitch - lpfErrorPitchOLD) / stateData.deltaT; // take derivative of lpf signal
+	float derivativeRollError = (lpfErrorRoll - lpfErrorRollOLD) / stateData.deltaT; // take derivative of lpf signal
+	float derivativePitchError = (lpfErrorPitch - lpfErrorPitchOLD) / stateData.deltaT; // take derivative of lpf signal
 
 	lpfErrorRollOLD = lpfErrorRoll; // update last measurement
 	lpfErrorPitchOLD = lpfErrorPitch; // update last measurement
@@ -231,8 +231,8 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 		totalKd = 0;
 
 	volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
-	rollCmd = totalKp * errorRoll + totalKd * derivativeRoll; // negative roll command means roll in negative direction
-	pitchCmd = totalKp * errorPitch + totalKd * derivativePitch; // negative pitch command means pitch in negative direction
+	rollCmd = totalKp * errorRoll + totalKd * derivativeRollError; // negative roll command means roll in negative direction
+	pitchCmd = totalKp * errorPitch + totalKd * derivativePitchError; // negative pitch command means pitch in negative direction
 	yawCmd = totalKp * errorYaw; // WAS:  "+ (kd + kdoOffset) * derivativeYaw"	// negative yaw command means yaw in negative direction
 	//yawCmd = 0.0; // TURN OFF YAW TEMPORARILY
 
