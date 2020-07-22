@@ -216,13 +216,24 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 
 
-	static float kp = 0.8;
-	static float kd = 0.04;
+	static float kp = 0.5;
+	static float kd = 0.06;
+
+	/* Add offset from radio commands */
+	static float totalKp, totalKd;
+	totalKp = kp + kpOffset;
+	totalKd = kd + kdOffset;
+
+	/* Cap minimum allowable values */
+	if(totalKp < 0.0)
+		totalKp = 0;
+	if(totalKd < 0.0)
+		totalKd = 0;
 
 	volatile static float rollCmd=0.0, pitchCmd=0.0, yawCmd=0.0;
-	rollCmd = (kp + kpOffset) * errorRoll + (kd + kdOffset) * derivativeRoll; // negative roll command means roll in negative direction
-	pitchCmd = (kp + kpOffset) * errorPitch + (kd + kdOffset) * derivativePitch; // negative pitch command means pitch in negative direction
-	yawCmd = (kp + kpOffset) * errorYaw; // WAS:  "+ (kd + kdoOffset) * derivativeYaw"	// negative yaw command means yaw in negative direction
+	rollCmd = totalKp * errorRoll + totalKd * derivativeRoll; // negative roll command means roll in negative direction
+	pitchCmd = totalKp * errorPitch + totalKd * derivativePitch; // negative pitch command means pitch in negative direction
+	yawCmd = totalKp * errorYaw; // WAS:  "+ (kd + kdoOffset) * derivativeYaw"	// negative yaw command means yaw in negative direction
 	//yawCmd = 0.0; // TURN OFF YAW TEMPORARILY
 
 #ifdef UART_DEBUG
