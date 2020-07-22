@@ -315,7 +315,7 @@ void FC_Flight_Loop(void)
 
 		} // if(NRF24_available())
 
-		//HAL_Delay(2);
+		//HAL_Delay(1);
 
 
 		/* >>> BY THIS POINT ALL ORIENTATION ANGLES SHOULD BE FULLY COMPUTED <<< */
