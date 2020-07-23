@@ -221,8 +221,8 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 
 
-	static float kp = 0.3;
-	static float kd = 0.06;
+	static float kp = 0.24;
+	static float kd = 0.14;
 
 	/* Add offset from radio commands */
 	static float totalKp, totalKd;
