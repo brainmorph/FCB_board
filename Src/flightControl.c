@@ -447,7 +447,7 @@ void FC_Flight_Loop(void)
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kd Offset:%f\r\n", (float)commandData.kdOffset);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
-		float angleCommandDelta = 0.2;
+		float angleCommandDelta = 0.6;
 		if(uartReceive[0] == 'w')
 		{
 			commandData.pitchSet -= angleCommandDelta; //was: 1.0;
@@ -496,7 +496,7 @@ void FC_Flight_Loop(void)
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Emergency off\r\n");
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
-		float throttleCommandDelta = 0.2;
+		float throttleCommandDelta = 0.4;
 		if(uartReceive[0] == '1')
 		{
 			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
