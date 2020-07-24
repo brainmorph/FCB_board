@@ -186,8 +186,8 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-#define FLIGHT_PLATFORM
-//#define GROUND_STATION
+//#define FLIGHT_PLATFORM
+#define GROUND_STATION
 	NRF24_startListening();
 	HAL_Delay(1);
 	while(1)
@@ -315,7 +315,7 @@ void FC_Flight_Loop(void)
 
 		} // if(NRF24_available())
 
-		HAL_Delay(1);
+		//HAL_Delay(1);
 
 
 		/* >>> BY THIS POINT ALL ORIENTATION ANGLES SHOULD BE FULLY COMPUTED <<< */
@@ -447,27 +447,28 @@ void FC_Flight_Loop(void)
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kd Offset:%f\r\n", (float)commandData.kdOffset);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
+		float angleCommandDelta = 0.2;
 		if(uartReceive[0] == 'w')
 		{
-			commandData.pitchSet -= 1.0;
+			commandData.pitchSet -= angleCommandDelta; //was: 1.0;
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "pitch:%f\r\n", (float)commandData.pitchSet);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 's')
 		{
-			commandData.pitchSet += 1.0;
+			commandData.pitchSet += angleCommandDelta;
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "pitch:%f\r\n", commandData.pitchSet);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 'a')
 		{
-			commandData.rollSet -= 1.0;
+			commandData.rollSet -= angleCommandDelta;
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "roll:%f\r\n", commandData.rollSet);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 'd')
 		{
-			commandData.rollSet += 1.0;
+			commandData.rollSet += angleCommandDelta;
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "roll:%f\r\n", commandData.rollSet);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
@@ -495,15 +496,16 @@ void FC_Flight_Loop(void)
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Emergency off\r\n");
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
+		float throttleCommandDelta = 0.2;
 		if(uartReceive[0] == '1')
 		{
 			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
-			commandData.throttleSet += 1.0;
+			commandData.throttleSet += throttleCommandDelta;
 		}
 		if(uartReceive[0] == '2')
 		{
 			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
-			commandData.throttleSet -= 3.0;
+			commandData.throttleSet -= throttleCommandDelta;
 		}
 		if(uartReceive[0] == '5')
 		{

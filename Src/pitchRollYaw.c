@@ -124,7 +124,7 @@ void CalculatePitchRollYaw(void)
 
 
 	/* Complementary filter gyro calculations with acceleration calculations */
-	static float alpha = 0.985;
+	static float alpha = 0.97;
 	rollAngle = alpha * rollAngle + (1-alpha) * accelRollAngle;
 	pitchAngle = alpha * pitchAngle + (1-alpha) * accelPitchAngle;
 
