@@ -110,7 +110,7 @@ void CalculatePitchRollYaw(void)
 
 	/* Low pass filter acceleration */
 	static float lpfAx = 0.0, lpfAy = 0.0, lpfAz = 0.0;
-	static float beta = 0.05;
+	static float beta = 0.03;
 	lpfAx = beta * accelX + (1 - beta) * lpfAx;
 	lpfAy = beta * accelY + (1 - beta) * lpfAy;
 	lpfAz = beta * accelZ + (1 - beta) * lpfAz;
@@ -124,7 +124,7 @@ void CalculatePitchRollYaw(void)
 
 
 	/* Complementary filter gyro calculations with acceleration calculations */
-	static float alpha = 0.97;
+	static float alpha = 0.999;
 	rollAngle = alpha * rollAngle + (1-alpha) * accelRollAngle;
 	pitchAngle = alpha * pitchAngle + (1-alpha) * accelPitchAngle;
 
