@@ -186,8 +186,8 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-#define FLIGHT_PLATFORM
-//#define GROUND_STATION
+//#define FLIGHT_PLATFORM
+#define GROUND_STATION
 	NRF24_startListening();
 	HAL_Delay(1);
 	while(1)
@@ -447,7 +447,7 @@ void FC_Flight_Loop(void)
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kd Offset:%f\r\n", (float)commandData.kdOffset);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
-		float angleCommandDelta = 0.6;
+		float angleCommandDelta = 0.7;
 		if(uartReceive[0] == 'w')
 		{
 			commandData.pitchSet -= angleCommandDelta; //was: 1.0;
@@ -474,13 +474,17 @@ void FC_Flight_Loop(void)
 		}
 		if(uartReceive[0] == 'q')
 		{
-			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
-			commandData.yawSet += 3.0;
+//			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.yawSet += angleCommandDelta;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "yaw:%f\r\n", commandData.yawSet);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == 'e')
 		{
-			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
-			commandData.yawSet -= 3.0;
+//			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			commandData.yawSet -= angleCommandDelta;
+			snprintf((char *)uartTransmit, sizeof(uartTransmit), "yaw:%f\r\n", commandData.yawSet);
+			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
 		if(uartReceive[0] == '0' || uartReceive[0] == '`') // emergency shutoff.  reset all values
 		{
@@ -496,7 +500,7 @@ void FC_Flight_Loop(void)
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Emergency off\r\n");
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
-		float throttleCommandDelta = 0.4;
+		float throttleCommandDelta = 0.7;
 		if(uartReceive[0] == '1')
 		{
 			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
