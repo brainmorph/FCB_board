@@ -221,8 +221,8 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 
 
-	static float kp = 0.0; //was: 0.24;
-	static float kd = 0.0; //was: 0.14;
+	static float kp = 0.1;	// close to the last value used before drone crash
+	static float kd = 0.04;	// close to the last value used before drone crash
 
 	/* Add offset from radio commands */
 	static float totalKp, totalKd;
