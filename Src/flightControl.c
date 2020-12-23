@@ -186,12 +186,13 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-//#define FLIGHT_PLATFORM
-#define GROUND_STATION
+#define FLIGHT_PLATFORM
+//#define GROUND_STATION
 	NRF24_startListening();
 	HAL_Delay(1);
 	while(1)
     {
+
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
 
 #ifdef FLIGHT_PLATFORM
@@ -208,7 +209,7 @@ void FC_Flight_Loop(void)
 		fcLoopCount++;
 		if(fcLoopCount % 20 == 0)
 		{
-			NRF24_stopListening(); // some delay is needed after this before TX
+			NRF24_stopListening(); // some delay is needed after this and before TX
 
 			/* Load up the data to send */
 			telemetryData.altitude = stateData.altitude;
@@ -247,6 +248,8 @@ void FC_Flight_Loop(void)
 		static volatile float receivedYaw = 0.0;
 		static volatile float receivedKpOffset = 0.0;
 		static volatile float receivedKdOffset = 0.0;
+		static volatile int safety_count = 0;
+		safety_count++;
 		if(NRF24_available())
 		{
 			static float nrfAfailableCount = 0.0;
@@ -259,10 +262,18 @@ void FC_Flight_Loop(void)
 
 			NRF24_read(&commandData, sizeof(commandData)); // remember that NRF radio can at most transmit 32 bytes
 
+
+			/* Make sure that "good" packet was received */
 			if((float)commandData.key != (float)3.14)
 			{
-				continue;
+				safety_count++; // received packet is NOT valid, increase safety count
 			}
+			else
+			{
+				safety_count = 0; // assume received packet is valid, reset safety count
+			}
+
+
 
 			receivedCount = commandData.count;
 
@@ -317,11 +328,25 @@ void FC_Flight_Loop(void)
 
 		//HAL_Delay(1);
 
+		/********** FAIL SAFE **********/
+//#define TURN_OFF_FAIL_SAFE
+#ifndef TURN_OFF_FAIL_SAFE
+		while(safety_count > 100) // infinite loop if it enters once
+		{
+			mixPWM(0, 0, 0, 0); // Immediately shut off all motors
+
+			char message[500] = "FAILSAFE TRIGGERED\r\n";
+			HAL_UART_Transmit(&huart6, (uint8_t *)message,
+				strlen(message), 10);
+
+			HAL_Delay(400);
+		}
+#endif
+		/********** FAIL SAFE **********/
+
 
 		/* >>> BY THIS POINT ALL ORIENTATION ANGLES SHOULD BE FULLY COMPUTED <<< */
-
 		CalculatePID(receivedThrottle, receivedRoll, receivedPitch, receivedYaw, receivedKpOffset, receivedKdOffset);
-
 
 
 #endif // FLIGHT_PLATFORM
