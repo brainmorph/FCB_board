@@ -15,4 +15,6 @@ void ReadGyro(float* floatX, float* floatY, float* floatZ);
 
 void InitMPU(void);
 
+uint16_t readFifoCount();
+
 #endif /* MPU6050_H */

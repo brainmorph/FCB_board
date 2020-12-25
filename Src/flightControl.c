@@ -151,9 +151,6 @@ void FC_Init(void)
 
 	InitMPU();
 	CollectInitalSensorValues();
-
-
-
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
@@ -192,6 +189,9 @@ void FC_Flight_Loop(void)
 	HAL_Delay(1);
 	while(1)
     {
+		/* Read FIFO count so far */
+		volatile uint16_t temp = readFifoCount();
+		temp = temp;
 
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
 
@@ -329,7 +329,7 @@ void FC_Flight_Loop(void)
 		//HAL_Delay(1);
 
 		/********** FAIL SAFE **********/
-//#define TURN_OFF_FAIL_SAFE
+#define TURN_OFF_FAIL_SAFE
 #ifndef TURN_OFF_FAIL_SAFE
 		while(safety_count > 100) // infinite loop if it enters once
 		{

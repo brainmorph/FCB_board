@@ -27,18 +27,35 @@ void InitMPU(void)
 	readMPUreg(0x6B);
 	readMPUreg(0x6B);
 
-	readMPUreg(0x1C); // read accel config register
+	//readMPUreg(0x1C); // read accel config register
 	writeMPUreg(0x1C, 0x10); // configure fullscale for +-8 g
 	value = readMPUreg(0x1C); // confirm
 
-	readMPUreg(0x1B); // read gyro config register
+	//readMPUreg(0x1B); // read gyro config register
 	writeMPUreg(0x1B, 0x08); // configure fullscale for +- 500 degress/s
 	value = readMPUreg(0x1B); // confirm
 
 	value = value;
 
-//	configMPUFilter(); // apply filtering to IMU readings
+	/* Do not apply any onboard MPU6050 filtering to prevent delay */
+	//configMPUFilter();
+
+
+	/* Enable MPU6050 FIFO */
+	writeMPUreg(0x23, 0x08); // put all acceleration values into FIFO (6 bytes)
+	value = readMPUreg(0x23);
+
+	value = readMPUreg(0x6A); // USER_CTRL register
+	value |= (1 << 6); // set FIFO_EN bit
+	writeMPUreg(0x6A, value);
+	value = readMPUreg(0x6A);
+
+	/* Read FIFO count so far */
+	volatile uint16_t temp = readFifoCount();
+	temp = temp;
 }
+
+
 
 /*
  * Read specified register from MPU6050 module.
@@ -119,8 +136,8 @@ static void writeMPUreg(uint8_t reg, uint8_t value) // TODO: move to separate mo
 //	volatile int16_t config = 0;
 //	config = readMPUreg(0x1A);
 //
-//	config &= 0xF8;
-//	config |= 0x0; // this is the value that goes into register
+//	config &= 0xF8; // clear lower 3 bits (DLPF_CFG)
+//	config |= 0x0; // set 3 lower bits (DLPF_CFG)
 //
 //	writeMPUreg(0x1A, config);
 //	volatile uint8_t test = readMPUreg(0x1A);
@@ -173,4 +190,15 @@ void ReadGyro(float* floatX, float* floatY, float* floatZ)
 	*floatY = (float)gY * (500.0/32767.0);
 	*floatZ = (float)gZ * (500.0/32767.0);
 
+}
+
+
+
+uint16_t readFifoCount()
+{
+	uint8_t fifo_count[2];
+	readMPUregs(0x72, 2, fifo_count);
+	volatile uint16_t temp = (((uint16_t)fifo_count[1]) << 8 | ((uint16_t)fifo_count[0]));
+
+	return temp;
 }
