@@ -13,7 +13,6 @@
 static uint8_t readMPUreg(uint8_t reg);
 static void readMPUregs(uint8_t reg, uint16_t size, uint8_t* data);
 static void writeMPUreg(uint8_t reg, uint8_t value);
-//static void configMPUFilter();
 
 
 void InitMPU(void)
@@ -38,8 +37,22 @@ void InitMPU(void)
 	value = value;
 
 	/* Do not apply any onboard MPU6050 filtering to prevent delay */
-	//configMPUFilter();
+//	// Read register
+//	volatile int16_t config = 0;
+//	config = readMPUreg(0x1A);
+//
+//	config &= 0xF8; // clear lower 3 bits (DLPF_CFG)
+//	config |= 0x0; // set 3 lower bits (DLPF_CFG)
+//
+//	writeMPUreg(0x1A, config);
+//	volatile uint8_t test = readMPUreg(0x1A);
+//	test = test;
 
+
+
+	/* Read FIFO count so far */
+	volatile uint16_t temp = readFifoCount();
+	temp = temp;
 
 	/* Enable MPU6050 FIFO */
 	writeMPUreg(0x23, 0x08); // put all acceleration values into FIFO (6 bytes)
@@ -51,7 +64,7 @@ void InitMPU(void)
 	value = readMPUreg(0x6A);
 
 	/* Read FIFO count so far */
-	volatile uint16_t temp = readFifoCount();
+	temp = readFifoCount();
 	temp = temp;
 }
 
@@ -129,20 +142,6 @@ static void writeMPUreg(uint8_t reg, uint8_t value) // TODO: move to separate mo
 		// TODO: log error
 	}
 }
-
-//static void configMPUFilter()
-//{
-//	// Read register
-//	volatile int16_t config = 0;
-//	config = readMPUreg(0x1A);
-//
-//	config &= 0xF8; // clear lower 3 bits (DLPF_CFG)
-//	config |= 0x0; // set 3 lower bits (DLPF_CFG)
-//
-//	writeMPUreg(0x1A, config);
-//	volatile uint8_t test = readMPUreg(0x1A);
-//	test = test;
-//}
 
 void ReadAcceleration(float* floatX, float* floatY, float* floatZ)
 {

@@ -5,6 +5,9 @@
 # Log
 DAILY_LOG.txt
 
+# UNIT_TEST
+UNIT_TESTING/
+
 *.pydevproject
 .project
 .metadata
