@@ -193,15 +193,8 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	errorPitch = pitchSet - stateData.pitch;	// error pitch is negative if quad will have to pitch in negative direction
 	errorYaw = yawSet - stateData.yaw;			// error yaw is negative if quad will have to yaw in negative direction
 
-//#define UART_DEBUG
-#ifdef UART_DEBUG
-	char debugMessage[100];
 
-	snprintf(debugMessage, 100, "errorRoll = %f     errorPitch = %f     errorYaw = %f     ", errorRoll, errorPitch, errorYaw);
-	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
-#endif
-
-	/* LPF the error terms */
+	/* LPF the error terms to calculate derivative terms */
 	static float lpfErrorRoll=0.0, lpfErrorPitch=0.0, lpfErrorRollOLD = 0.0, lpfErrorPitchOLD = 0.0;
 	static float gamma = 0.5;
 	lpfErrorRoll = gamma * lpfErrorRoll + (1 - gamma) * errorRoll;
@@ -214,6 +207,7 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	lpfErrorRollOLD = lpfErrorRoll; // update last measurement
 	lpfErrorPitchOLD = lpfErrorPitch; // update last measurement
 
+#undef UART_DEBUG
 #ifdef UART_DEBUG
 	snprintf(debugMessage, 100, "derivativeRoll= %f     derivativePitch = %f\r\n", derivativeRollError, derivativePitchError);
 	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
@@ -241,7 +235,7 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	yawCmd = totalKp * errorYaw; // WAS:  "+ (kd + kdoOffset) * derivativeYaw"	// negative yaw command means yaw in negative direction
 	//yawCmd = 0.0; // TURN OFF YAW TEMPORARILY
 
-
+#undef UART_DEBUG
 #ifdef UART_DEBUG
 //	snprintf(debugMessage, 100, "kp = %f, kpOffset = %f     kd = %f, kdOffset = %f     ", kp, kpOffset, kd, kdOffset);
 //	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
@@ -249,6 +243,32 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	snprintf(debugMessage, 100, "rollCmd = %f     pitchCmd = %f \r\n", rollCmd, pitchCmd);
 	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
 #endif
+
+
+
+#define EXPERIMENTAL
+#ifdef EXPERIMENTAL
+	/* Low Pass Filter the command signals (dodgy)*/
+	static float lpfRollCmd=0.0, lpfPitchCmd=0.0;
+	float beta = 0.9;
+	lpfRollCmd = beta * lpfRollCmd + (1 - beta) * rollCmd;
+	lpfPitchCmd = beta * lpfPitchCmd + (1 - beta) * pitchCmd;
+
+	/* Scale signal back up */
+	float scaleFactor = 1.2;
+	float scaledRollCmd = lpfRollCmd * scaleFactor;
+	float scaledPitchCmd = lpfPitchCmd * scaleFactor;
+#endif
+
+#define UART_DEBUG
+#ifdef UART_DEBUG
+	char debugMessage[100];
+
+//	snprintf(debugMessage, 100, "errorRoll = %f     errorPitch = %f     errorYaw = %f     ", errorRoll, errorPitch, errorYaw);
+	snprintf(debugMessage, 100, "%f,%f,%f,%f,%f,%f \r\n", errorRoll, rollCmd, scaledRollCmd, errorPitch, pitchCmd, scaledPitchCmd);
+	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
+#endif
+
 
 	mixPWM(throttleSet, rollCmd, pitchCmd, yawCmd);
 }
