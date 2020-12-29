@@ -8,6 +8,9 @@ DAILY_LOG.txt
 # UNIT_TEST
 UNIT_TESTING/
 
+# MATLAB
+MATLAB/
+
 *.pydevproject
 .project
 .metadata
