@@ -81,6 +81,8 @@ char myRxData[50];
 
 void FC_Init(void)
 {
+	HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, GPIO_PIN_SET);
+
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
@@ -123,6 +125,7 @@ void FC_Init(void)
 	//HAL_TIM_Base_Start_IT(&htim6); //Start the timer interrupt
 
 	BMFC_BME280_Init(); // Initialize the BME280 sensor
+	HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, GPIO_PIN_RESET);
 
 	NRF24_begin(GPIOB, SPI1_CS_Pin, SPI1_CE_Pin, hspi1);
 	nrf24_DebugUART_Init(huart6);
@@ -151,6 +154,8 @@ void FC_Init(void)
 
 	InitMPU();
 	CollectInitalSensorValues();
+
+	HAL_GPIO_WritePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin, GPIO_PIN_SET);
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
