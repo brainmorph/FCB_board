@@ -176,9 +176,9 @@ void GatherSensorData()
 	CalculatePitchRollYaw();
 
 	stateData.altitude = CurrentAltitude();
-	stateData.pitch = CurrentPitchAngle(); // from -180 to 180
-	stateData.roll = CurrentRollAngle(); // from -180 to 180
-	stateData.yaw = CurrentYawAngle(); // from -180 to 180
+	stateData.pitch = CurrentPitchAngle(); // ideally from -180 to 180
+	stateData.roll = CurrentRollAngle(); // ideally from -180 to 180
+	stateData.yaw = CurrentYawAngle(); // ideally from -180 to 180
 	stateData.deltaT = LastDeltaT();
 }
 
@@ -258,6 +258,13 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	float scaleFactor = 1.2;
 	float scaledRollCmd = lpfRollCmd * scaleFactor;
 	float scaledPitchCmd = lpfPitchCmd * scaleFactor;
+
+
+
+	/* Low Pass Filter altitude signal */
+	static float lpfAltitude=0.0;
+	float altitudeFilter = 0.95;
+	lpfAltitude = altitudeFilter * lpfAltitude + (1 - altitudeFilter) * stateData.altitude;
 #endif
 
 #define UART_DEBUG
@@ -265,7 +272,10 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	char debugMessage[100];
 
 //	snprintf(debugMessage, 100, "errorRoll = %f     errorPitch = %f     errorYaw = %f     ", errorRoll, errorPitch, errorYaw);
-	snprintf(debugMessage, 100, "%f,%f,%f,%f,%f,%f \r\n", errorRoll, rollCmd, scaledRollCmd, errorPitch, pitchCmd, scaledPitchCmd);
+	snprintf(debugMessage, 100, "%f,%f,%f,%f,%f,%f,%f \r\n",
+			errorRoll, rollCmd, scaledRollCmd,
+			errorPitch, pitchCmd, scaledPitchCmd,
+			lpfAltitude);
 	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
 #endif
 
