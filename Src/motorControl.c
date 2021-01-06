@@ -248,17 +248,16 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 #define EXPERIMENTAL
 #ifdef EXPERIMENTAL
-	/* Low Pass Filter the command signals (dodgy)*/
+	/* Low Pass Filter the command signals */
 	static float lpfRollCmd=0.0, lpfPitchCmd=0.0;
 	float beta = 0.9;
 	lpfRollCmd = beta * lpfRollCmd + (1 - beta) * rollCmd;
 	lpfPitchCmd = beta * lpfPitchCmd + (1 - beta) * pitchCmd;
 
 	/* Scale signal back up */
-	float scaleFactor = 1.2;
+	float scaleFactor = 1.1;
 	float scaledRollCmd = lpfRollCmd * scaleFactor;
 	float scaledPitchCmd = lpfPitchCmd * scaleFactor;
-
 
 
 	/* Low Pass Filter altitude signal */
@@ -269,14 +268,14 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 #define UART_DEBUG
 #ifdef UART_DEBUG
-	char debugMessage[100];
+	char debugMessage[120];
 
 //	snprintf(debugMessage, 100, "errorRoll = %f     errorPitch = %f     errorYaw = %f     ", errorRoll, errorPitch, errorYaw);
-	snprintf(debugMessage, 100, "%f,%f,%f,%f,%f,%f,%f \r\n",
+	snprintf(debugMessage, 120, "ok,%f,%f,%f,%f,%f,%f,%f \r\n",
 			errorRoll, rollCmd, scaledRollCmd,
 			errorPitch, pitchCmd, scaledPitchCmd,
 			lpfAltitude);
-	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10); // print success with 10 ms timeout
+	HAL_UART_Transmit(&huart6, (uint8_t *)debugMessage, strlen(debugMessage), 10);
 #endif
 
 
