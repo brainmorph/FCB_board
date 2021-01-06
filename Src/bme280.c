@@ -19,6 +19,8 @@ static int32_t t_fine;
 	Return non-zero if successful */
 int BMFC_BME280_Init(void)
 {
+	HAL_Delay(2000); // give the sensor a chance to boot
+
 	if(BMFC_BME280_ConfirmI2C_Comms() == 0)
 	{
 		return 0;
