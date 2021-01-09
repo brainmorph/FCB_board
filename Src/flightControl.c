@@ -188,15 +188,15 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-#define FLIGHT_PLATFORM
-//#define GROUND_STATION
+//#define FLIGHT_PLATFORM
+#define GROUND_STATION
 	NRF24_startListening();
 	HAL_Delay(1);
 	while(1)
     {
 		/* Read FIFO count so far */
-		volatile uint16_t temp = readFifoCount();
-		temp = temp;
+//		volatile uint16_t temp = readFifoCount();
+//		temp = temp;
 
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
 
@@ -403,8 +403,7 @@ void FC_Flight_Loop(void)
 
 
 
-#define UART_DEBUG
-#ifdef UART_DEBUG
+
 			//receivedAltitude = *(float *)myRxData; // handle myRxData as a 4 byte float and read the value from it
 			volatile float receivedAltitude = telemetryData.altitude;
 			volatile float receivedRoll = telemetryData.roll;
@@ -412,9 +411,7 @@ void FC_Flight_Loop(void)
 			volatile float receivedYaw = telemetryData.yaw;
 
 
-			snprintf(myRxData, 128, "%lu alt: %f     roll: %f     pitch: %f     yaw: %f \r\n",
-					(uint32_t)telemetryData.count, receivedAltitude, receivedRoll, receivedPitch, receivedYaw);
-			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print with 10 ms timeout
+
 
 			static int packetsLost = 0;
 			static int lastCount = 0;
@@ -423,14 +420,34 @@ void FC_Flight_Loop(void)
 				packetsLost += (telemetryData.count - (lastCount+1));
 			}
 
-
 			volatile int lostPacketRatio = (int)(((float)packetsLost/(float)nrfAfailableCount) * 100.0);
-			snprintf(myRxData, 64, "Packets lost = %d.  Lost packet ratio = %d %% \r\n", packetsLost, lostPacketRatio);
-			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print success with 10 ms timeout
-
 			lastCount = telemetryData.count;
+
+
+//#define UART_DEBUG
+#ifdef UART_DEBUG
+			snprintf(myRxData, 128, "%lu alt: %f     roll: %f     pitch: %f     yaw: %f \r\n",
+					(uint32_t)telemetryData.count, receivedAltitude, receivedRoll, receivedPitch, receivedYaw);
+			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // print with 10 ms timeout
+
+
+
+			snprintf(myRxData, 64, "Packets lost = %d.  Lost packet ratio = %d %% \r\n", packetsLost, lostPacketRatio);
+			HAL_UART_Transmit(&huart6, (uint8_t *)myRxData, strlen(myRxData), 10); // send to UART with 10 ms timeout
+
+
 #endif // UART_DEBUG
 #undef UART_DEBUG
+
+
+
+#define SEND_TO_GUI
+#ifdef SEND_TO_GUI
+			char guiData[120];
+			snprintf(guiData, 120, "1<3U,%f,%f,%f,%f,%d \r\n",
+					receivedAltitude, receivedPitch, receivedRoll, receivedYaw, lostPacketRatio);
+			HAL_UART_Transmit(&huart6, (uint8_t *)guiData, strlen(guiData), 10); // send to UART with 10 ms timeout
+#endif // GUI_CONNECTED
 
 		} // if(NRF24_available())
 
