@@ -188,8 +188,8 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-//#define FLIGHT_PLATFORM
-#define GROUND_STATION
+#define FLIGHT_PLATFORM
+//#define GROUND_STATION
 	NRF24_startListening();
 	HAL_Delay(1);
 	while(1)
@@ -334,7 +334,7 @@ void FC_Flight_Loop(void)
 		//HAL_Delay(1);
 
 		/********** FAIL SAFE **********/
-#define TURN_OFF_FAIL_SAFE
+//#define TURN_OFF_FAIL_SAFE
 #ifndef TURN_OFF_FAIL_SAFE
 		while(safety_count > 100) // infinite loop if it enters once
 		{
@@ -344,7 +344,8 @@ void FC_Flight_Loop(void)
 			HAL_UART_Transmit(&huart6, (uint8_t *)message,
 				strlen(message), 10);
 
-			HAL_Delay(400);
+			HAL_GPIO_TogglePin(BME280_STATUS_LED_GPIO_Port, BME280_STATUS_LED_Pin);
+			HAL_Delay(100);
 		}
 #endif
 		/********** FAIL SAFE **********/

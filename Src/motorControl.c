@@ -245,8 +245,7 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 #endif
 
 
-
-#define EXPERIMENTAL
+//#define EXPERIMENTAL
 #ifdef EXPERIMENTAL
 	/* Low Pass Filter the command signals */
 	static float lpfRollCmd=0.0, lpfPitchCmd=0.0;
@@ -266,7 +265,7 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	lpfAltitude = altitudeFilter * lpfAltitude + (1 - altitudeFilter) * stateData.altitude;
 #endif
 
-#define UART_DEBUG
+//#define UART_DEBUG
 #ifdef UART_DEBUG
 	char debugMessage[120];
 
