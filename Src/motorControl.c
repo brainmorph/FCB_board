@@ -16,7 +16,7 @@
 
 
 
-StateData_t stateData = {0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+StateData_t stateData = {0, 0.0, 0.0, 0.0, 0.0};
 
 
 void mixPWM(float thrust, float roll, float pitch, float yaw)

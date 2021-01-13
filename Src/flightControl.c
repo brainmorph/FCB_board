@@ -23,6 +23,15 @@
 #include "mpu6050.h"
 #include "motorControl.h"
 
+
+
+
+/* Hardware Selection Macros */
+#define FLIGHT_PLATFORM
+//#define GROUND_STATION
+
+
+
 /* Private Variables */
 static uint32_t MainFlightLoopTimer = 0;
 
@@ -188,16 +197,12 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-//#define FLIGHT_PLATFORM
-#define GROUND_STATION
+
 	NRF24_startListening();
 	HAL_Delay(1);
+
 	while(1)
     {
-		/* Read FIFO count so far */
-//		volatile uint16_t temp = readFifoCount();
-//		temp = temp;
-
 		Ms_Timer_Start(&MainFlightLoopTimer); // restart timer
 
 #ifdef FLIGHT_PLATFORM
@@ -218,9 +223,9 @@ void FC_Flight_Loop(void)
 
 			/* Load up the data to send */
 			telemetryData.altitude = stateData.altitude;
-			telemetryData.pitch = stateData.pitch;
-			telemetryData.roll = stateData.roll;
-			telemetryData.yaw = stateData.yaw;
+			telemetryData.pitch = commandData.pitchSet - stateData.pitch;
+			telemetryData.roll = commandData.rollSet - stateData.roll;
+			telemetryData.yaw = commandData.yawSet - stateData.yaw;
 			telemetryData.deltaT = stateData.deltaT;
 
 			/* Send data */
