@@ -188,8 +188,8 @@ extern StateData_t stateData;
 static int fcLoopCount = 0;
 void FC_Flight_Loop(void)
 {
-#define FLIGHT_PLATFORM
-//#define GROUND_STATION
+//#define FLIGHT_PLATFORM
+#define GROUND_STATION
 	NRF24_startListening();
 	HAL_Delay(1);
 	while(1)
@@ -551,19 +551,30 @@ void FC_Flight_Loop(void)
 		float throttleCommandDelta = 0.7;
 		if(uartReceive[0] == '1')
 		{
-			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			uartReceive[1] = '\n';
+			HAL_UART_Transmit(&huart6, uartReceive, sizeof(uartReceive), 5);
 			commandData.throttleSet += throttleCommandDelta;
 		}
 		if(uartReceive[0] == '2')
 		{
-			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			uartReceive[1] = '\n';
+			HAL_UART_Transmit(&huart6, uartReceive, sizeof(uartReceive), 5);
 			commandData.throttleSet -= throttleCommandDelta;
 		}
 		if(uartReceive[0] == '5')
 		{
-			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
+			uartReceive[1] = '\n';
+			HAL_UART_Transmit(&huart6, uartReceive, sizeof(uartReceive), 5);
 			commandData.throttleSet = 0.0;
 		}
+
+		//TEST
+//		char testString[12];
+//		static int testCount = 0;
+//		testCount++;
+//		snprintf((char *)testString, sizeof(testString), "%d\r\n", testCount);
+//		HAL_UART_Transmit(&huart6, (uint8_t*)testString, strlen(testString), 5);
+		//TEST
 
 //		if(uartReceive[0] == '$')
 //		{

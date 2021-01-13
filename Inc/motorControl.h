@@ -16,9 +16,13 @@ typedef struct StateData_t
 	float roll; 	// 4 bytes
 	float yaw; 		// 4 bytes
 
+	float errorPitch;	// 4 bytes
+	float errorRoll;	// 4 bytes
+	float errorYaw;		// 4 bytes
+
 	float deltaT;	// 4 bytes
 
-}StateData_t; // this packet MUST BE 32 bytes in size
+}StateData_t; // this packet MUST BE MAXIMUM 32 bytes in size
 
 
 void mixPWM(float thrust, float roll, float pitch, float yaw);
