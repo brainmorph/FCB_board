@@ -215,8 +215,10 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 
 
 
-	static float kp = 0.1;	// close to the last value used before drone crash
-	static float kd = 0.04;	// close to the last value used before drone crash
+	//static float kp = 0.1;	// close to the last value used before drone crash
+	//static float kd = 0.04;	// close to the last value used before drone crash
+	static float kp = 0.0;
+	static float kd = 0.0;
 
 	/* Add offset from radio commands */
 	static float totalKp, totalKd;
@@ -233,7 +235,7 @@ void CalculatePID(float throttleSet, float rollSet, float pitchSet, float yawSet
 	rollCmd = totalKp * errorRoll + totalKd * derivativeRollError; // negative roll command means roll in negative direction
 	pitchCmd = totalKp * errorPitch + totalKd * derivativePitchError; // negative pitch command means pitch in negative direction
 	yawCmd = totalKp * errorYaw; // WAS:  "+ (kd + kdoOffset) * derivativeYaw"	// negative yaw command means yaw in negative direction
-	//yawCmd = 0.0; // TURN OFF YAW TEMPORARILY
+	yawCmd = 0.0; // TURN OFF YAW TEMPORARILY
 
 #undef UART_DEBUG
 #ifdef UART_DEBUG
