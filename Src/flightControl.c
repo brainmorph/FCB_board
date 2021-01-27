@@ -27,8 +27,8 @@
 
 
 /* Hardware Selection Macros */
-#define FLIGHT_PLATFORM
-//#define GROUND_STATION
+//#define FLIGHT_PLATFORM
+#define GROUND_STATION
 
 
 
@@ -64,7 +64,7 @@ typedef struct CommandPacket_t // this packet MUST BE 32 bytes in size
 	float pitchSet;		// 4 bytes
 	float yawSet;		// 4 bytes
 
-	float kpOffset;	// 4 bytes
+	float kpOffset;		// 4 bytes
 	float kdOffset; 	// 4 bytes
 
 }CommandPacket_t; // this packet MUST BE 32 bytes in size
@@ -471,7 +471,7 @@ void FC_Flight_Loop(void)
 		{
 			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
 			//kp += 0.01;
-			commandData.kpOffset += 0.01;
+			commandData.kpOffset += 0.005;
 
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kp Offset:%f\r\n", (float)commandData.kpOffset);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
@@ -480,7 +480,7 @@ void FC_Flight_Loop(void)
 		{
 			HAL_UART_Transmit(&huart6, uartReceive, 1, 5);
 			//kp -= 0.01;
-			commandData.kpOffset -= 0.01;
+			commandData.kpOffset -= 0.005;
 			snprintf((char *)uartTransmit, sizeof(uartTransmit), "Kp Offset:%f\r\n", (float)commandData.kpOffset);
 			HAL_UART_Transmit(&huart6, uartTransmit, 25, 5);
 		}
