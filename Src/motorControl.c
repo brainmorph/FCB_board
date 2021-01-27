@@ -76,7 +76,7 @@ float motor1Setting=0.0, motor2Setting=0.0, motor3Setting=0.0, motor4Setting=0.0
 void setPWM(int arm, float motor1, float motor2, float motor3, float motor4)
 {
 
-	float motorMin = 12.0;
+	float motorMin = 8.0;
 
 	/* Clip min motor output */
 	if(motor1 < motorMin)

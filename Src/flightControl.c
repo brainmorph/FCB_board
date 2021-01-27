@@ -27,8 +27,8 @@
 
 
 /* Hardware Selection Macros */
-//#define FLIGHT_PLATFORM
-#define GROUND_STATION
+#define FLIGHT_PLATFORM
+//#define GROUND_STATION
 
 
 
